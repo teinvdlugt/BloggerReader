@@ -17,14 +17,25 @@ import java.util.Date;
 public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
     private Blog.Posts data;
     private Context context;
+    private OnPostClickListener clickListener;
 
-    public PostAdapter(Blog.Posts data, Context context) {
+    public PostAdapter(Context context, Blog.Posts data, OnPostClickListener clickListener) {
         this.data = data;
         this.context = context;
+        this.clickListener = clickListener;
+    }
+
+    public PostAdapter(Context context, OnPostClickListener clickListener) {
+        this.context = context;
+        this.clickListener = clickListener;
     }
 
     public PostAdapter(Context context) {
         this.context = context;
+    }
+
+    public void setOnPostClickListener(OnPostClickListener clickListener) {
+        this.clickListener = clickListener;
     }
 
     public Blog.Posts getData() {
@@ -50,21 +61,34 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
         return data == null ? 0 : data.getItems().size();
     }
 
-    public static class ViewHolder extends RecyclerView.ViewHolder {
+    public class ViewHolder extends RecyclerView.ViewHolder {
         private TextView title, published;
         private DateFormat dateFormat;
+        private Post post;
 
         public ViewHolder(View itemView) {
             super(itemView);
             title = (TextView) itemView.findViewById(R.id.post_title);
             published = (TextView) itemView.findViewById(R.id.published_time);
             dateFormat = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT);
+
+            itemView.findViewById(R.id.item_root).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    clickListener.onClickPost(post);
+                }
+            });
         }
 
         public void bind(Post post) {
+            this.post = post;
             title.setText(post.getTitle());
             Date date = new Date(post.getPublished().getValue());
             published.setText(post.getAuthor().getDisplayName() + ", " + dateFormat.format(date));
         }
+    }
+
+    public interface OnPostClickListener {
+        void onClickPost(Post post);
     }
 }

@@ -21,6 +21,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".PostActivity"
+            android:label="Post Viewer"
+            android:theme="@style/AppTheme" />
     </application>
 
 </manifest>

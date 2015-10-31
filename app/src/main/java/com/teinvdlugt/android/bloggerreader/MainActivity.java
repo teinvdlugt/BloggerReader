@@ -16,13 +16,15 @@ import com.google.api.client.extensions.android.http.AndroidHttp;
 import com.google.api.client.extensions.android.json.AndroidJsonFactory;
 import com.google.api.services.blogger.Blogger;
 import com.google.api.services.blogger.model.Blog;
+import com.google.api.services.blogger.model.Post;
 
 import java.io.IOException;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements PostAdapter.OnPostClickListener {
     public static final String API_KEY = "AIzaSyAsG_pjWPPXYWq68igzilu77ss0qRP5yM8";
 
     private PostAdapter adapter;
+    private Blogger blogger;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,8 +33,11 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        blogger = new Blogger.Builder(
+                AndroidHttp.newCompatibleTransport(), AndroidJsonFactory.getDefaultInstance(), null).build();
+
         RecyclerView recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
-        adapter = new PostAdapter(this);
+        adapter = new PostAdapter(this, this);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(adapter);
         refresh();
@@ -45,8 +50,6 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     if (checkNotConnected()) return new Blog.Posts();
 
-                    Blogger blogger = new Blogger.Builder(
-                            AndroidHttp.newCompatibleTransport(), AndroidJsonFactory.getDefaultInstance(), null).build();
                     Blog googleblog = blogger.blogs().get("10861780").setMaxPosts(50l).setKey(API_KEY).execute();
                     return googleblog.getPosts();
 
@@ -64,6 +67,11 @@ public class MainActivity extends AppCompatActivity {
                 adapter.notifyDataSetChanged();
             }
         }.execute();
+    }
+
+    @Override
+    public void onClickPost(Post post) {
+        PostActivity.openActivity(this, post.getBlog().getId(), post.getId());
     }
 
     private boolean checkNotConnected() {
