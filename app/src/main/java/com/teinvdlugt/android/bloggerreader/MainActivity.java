@@ -47,8 +47,11 @@ public class MainActivity extends AppCompatActivity {
 
                     Blogger blogger = new Blogger.Builder(
                             AndroidHttp.newCompatibleTransport(), AndroidJsonFactory.getDefaultInstance(), null).build();
-                    Blog googleblog = blogger.blogs().get("10861780").setMaxPosts(10l).setKey(API_KEY).execute();
+                    Blog googleblog = blogger.blogs().get("10861780").setMaxPosts(50l).setKey(API_KEY).execute();
                     return googleblog.getPosts();
+
+                    // Official Google Blog: 10861780
+                    // Mike Louwman: 5563501798919888465
                 } catch (IOException e) {
                     e.printStackTrace();
                     return new Blog.Posts();

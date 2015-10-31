@@ -8,7 +8,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.google.api.client.util.DateTime;
 import com.google.api.services.blogger.model.Blog;
 import com.google.api.services.blogger.model.Post;
 
@@ -52,21 +51,20 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
-        private TextView title, published, preview;
+        private TextView title, published;
         private DateFormat dateFormat;
 
         public ViewHolder(View itemView) {
             super(itemView);
             title = (TextView) itemView.findViewById(R.id.post_title);
             published = (TextView) itemView.findViewById(R.id.published_time);
-            preview = (TextView) itemView.findViewById(R.id.post_preview);
-            dateFormat = DateFormat.getDateTimeInstance();
+            dateFormat = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT);
         }
 
-        public void bind(Post data) {
-            title.setText(data.getTitle());
-            Date date = new Date(data.getPublished().getValue());
-            published.setText(dateFormat.format(date));
+        public void bind(Post post) {
+            title.setText(post.getTitle());
+            Date date = new Date(post.getPublished().getValue());
+            published.setText(post.getAuthor().getDisplayName() + ", " + dateFormat.format(date));
         }
     }
 }
