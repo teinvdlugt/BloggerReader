@@ -129,7 +129,12 @@ public class PostActivity extends AppCompatActivity {
                     case BLOG_NAME:
                         blogNameTV.setVisibility(View.VISIBLE);
                         blogNameTV.setText(blog.getName());
-                        // TODO: 3-11-2015 Set onclick listener: goto Blog Activity
+                        blogNameTV.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                BlogActivity.openBlogActivity(PostActivity.this, blog.getId());
+                            }
+                        });
                         break;
                 }
             }

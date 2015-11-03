@@ -14,10 +14,16 @@ import com.google.api.services.blogger.model.Post;
 import java.text.DateFormat;
 import java.util.Date;
 
-public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
+public class PostAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+    private static final int ITEM_VIEW_TYPE = 0;
+    private static final int HEADER_VIEW_TYPE = 1;
+
     private Blog.Posts data;
     private Context context;
     private OnPostClickListener clickListener;
+    private boolean header;
+
+    private HeaderUpdateListener headerListener;
 
     public PostAdapter(Context context, Blog.Posts data, OnPostClickListener clickListener) {
         this.data = data;
@@ -38,6 +44,11 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
         this.clickListener = clickListener;
     }
 
+    public void setHeader(HeaderUpdateListener listener) {
+        this.header = true;
+        this.headerListener = listener;
+    }
+
     public Blog.Posts getData() {
         return data;
     }
@@ -47,21 +58,47 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
     }
 
     @Override
-    public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        return new ViewHolder(LayoutInflater.from(context).inflate(R.layout.list_item_post, parent, false));
+    public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        switch (viewType) {
+            case ITEM_VIEW_TYPE:
+                return new ViewHolder(LayoutInflater.from(context).inflate(R.layout.list_item_post, parent, false));
+            case HEADER_VIEW_TYPE:
+                return headerListener == null ? null : headerListener.createViewHolder(parent);
+        }
+        return null;
     }
 
     @Override
-    public void onBindViewHolder(ViewHolder holder, int position) {
-        holder.bind(data.getItems().get(position));
+    public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+        switch (getItemViewType(position)) {
+            case HEADER_VIEW_TYPE:
+                if (headerListener != null) headerListener.bindViewHolder(holder);
+                break;
+            case ITEM_VIEW_TYPE:
+                if (getItemViewType(0) == HEADER_VIEW_TYPE) {
+                    // A header is present
+                    position--;
+                }
+                ((ViewHolder) holder).bind(data.getItems().get(position));
+        }
+    }
+
+    @Override
+    public int getItemViewType(int position) {
+        if (position == 0 && header) {
+            return HEADER_VIEW_TYPE;
+        } else {
+            return ITEM_VIEW_TYPE;
+        }
     }
 
     @Override
     public int getItemCount() {
-        return data == null ? 0 : data.getItems().size();
+        int items = data == null || data.getItems() == null ? 0 : data.getItems().size();
+        return items + (header ? 1 : 0);
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder {
+    private class ViewHolder extends RecyclerView.ViewHolder {
         private TextView title, published;
         private DateFormat dateFormat;
         private Post post;
@@ -90,5 +127,11 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
 
     public interface OnPostClickListener {
         void onClickPost(Post post);
+    }
+
+    public interface HeaderUpdateListener {
+        RecyclerView.ViewHolder createViewHolder(ViewGroup parent);
+
+        void bindViewHolder(RecyclerView.ViewHolder holder);
     }
 }
