@@ -20,6 +20,7 @@ import android.widget.TextView;
 import com.google.api.client.extensions.android.http.AndroidHttp;
 import com.google.api.client.extensions.android.json.AndroidJsonFactory;
 import com.google.api.services.blogger.Blogger;
+import com.google.api.services.blogger.model.Blog;
 import com.google.api.services.blogger.model.Post;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
@@ -41,7 +42,8 @@ public class PostActivity extends AppCompatActivity {
 
     private Post post;
     private List<ContentPiece> postContent = new ArrayList<>();
-    private TextView title, published;
+    private Blog blog;
+    private TextView titleTV, publishedTV, blogNameTV;
     private LinearLayout contentContainer;
     private Blogger blogger;
     private DateFormat dateFormat;
@@ -60,19 +62,23 @@ public class PostActivity extends AppCompatActivity {
         blogger = new Blogger.Builder(
                 AndroidHttp.newCompatibleTransport(), AndroidJsonFactory.getDefaultInstance(), null).build();
 
-        title = (TextView) findViewById(R.id.post_title);
-        published = (TextView) findViewById(R.id.published_time);
+        titleTV = (TextView) findViewById(R.id.post_title);
+        publishedTV = (TextView) findViewById(R.id.published_time);
         contentContainer = (LinearLayout) findViewById(R.id.content_container);
+        blogNameTV = (TextView) findViewById(R.id.blogName_textView);
 
         refresh();
     }
 
     private void refresh() {
-        new AsyncTask<String, Void, Post>() {
+        new AsyncTask<String, ProgressUpdateType, Void>() {
             @Override
-            protected Post doInBackground(String... params) {
+            protected Void doInBackground(String... params) {
                 try {
-                    Post post = blogger.posts().get(params[0], params[1]).setKey(MainActivity.API_KEY).execute();
+                    post = blogger.posts().get(params[0], params[1]).setKey(MainActivity.API_KEY).execute();
+                    publishProgress(ProgressUpdateType.TITLE_PUBLISHED);
+
+                    if (isCancelled()) return null;
 
                     String content = post.getContent();
                     content = "<p>" + content + "</p>";
@@ -94,7 +100,16 @@ public class PostActivity extends AppCompatActivity {
                         }
                     }
 
-                    return post;
+                    publishProgress(ProgressUpdateType.CONTENT);
+                    if (isCancelled()) return null;
+
+                    // Retrieve blog name and link
+                    String blogId = post.getBlog().getId();
+                    blog = blogger.blogs().get(blogId).setKey(MainActivity.API_KEY).execute();
+                    if (blog != null)
+                        publishProgress(ProgressUpdateType.BLOG_NAME);
+
+                    return null;
                 } catch (IOException e) {
                     e.printStackTrace();
                     return null;
@@ -102,23 +117,30 @@ public class PostActivity extends AppCompatActivity {
             }
 
             @Override
-            protected void onPostExecute(Post post) {
-                PostActivity.this.post = post;
-                loadPostContents();
+            protected void onProgressUpdate(ProgressUpdateType... type) {
+                switch (type[0]) {
+                    case TITLE_PUBLISHED:
+                        titleTV.setText(post.getTitle());
+                        setDate(post.getPublished().getValue());
+                        break;
+                    case CONTENT:
+                        loadPostContents();
+                        break;
+                    case BLOG_NAME:
+                        blogNameTV.setVisibility(View.VISIBLE);
+                        blogNameTV.setText(blog.getName());
+                        // TODO: 3-11-2015 Set onclick listener: goto Blog Activity
+                        break;
+                }
             }
         }.execute(blogId, postId);
     }
 
-    private void loadPostContents() {
-        if (post == null) {
-            contentContainer.removeAllViews();
-            published.setText("");
-            title.setText("Error.");
-            return;
-        }
+    private void setDate(long millis) {
+        publishedTV.setText(dateFormat.format(new Date(millis)));
+    }
 
-        title.setText(post.getTitle());
-        published.setText(dateFormat.format(new Date(post.getPublished().getValue())));
+    private void loadPostContents() {
         contentContainer.removeAllViews();
 
         for (final ContentPiece piece : postContent) {
@@ -208,4 +230,6 @@ public class PostActivity extends AppCompatActivity {
             this.height = height;
         }
     }
+
+    private enum ProgressUpdateType {TITLE_PUBLISHED, CONTENT, BLOG_NAME}
 }

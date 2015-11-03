@@ -45,6 +45,14 @@
                     tools:text="More ways to Wi-Fi with the new ASUS OnHub" />
 
                 <TextView
+                    android:id="@+id/blogName_textView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:visibility="gone"
+                    android:textSize="16sp"
+                    android:textColor="@color/blog_link_text_color"/>
+
+                <TextView
                     android:id="@+id/published_time"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
