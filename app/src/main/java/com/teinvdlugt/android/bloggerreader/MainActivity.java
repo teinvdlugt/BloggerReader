@@ -21,10 +21,12 @@ import android.view.MenuItem;
 import com.google.api.client.extensions.android.http.AndroidHttp;
 import com.google.api.client.extensions.android.json.AndroidJsonFactory;
 import com.google.api.services.blogger.Blogger;
-import com.google.api.services.blogger.model.Blog;
 import com.google.api.services.blogger.model.Post;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements PostAdapter.OnPostClickListener {
@@ -32,6 +34,7 @@ public class MainActivity extends AppCompatActivity implements PostAdapter.OnPos
 
     private PostAdapter adapter;
     private Blogger blogger;
+    private String[] blogIds;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,6 +45,7 @@ public class MainActivity extends AppCompatActivity implements PostAdapter.OnPos
 
         blogger = new Blogger.Builder(
                 AndroidHttp.newCompatibleTransport(), AndroidJsonFactory.getDefaultInstance(), null).build();
+        blogIds = IOUtils.blogsFollowing(this);
 
         RecyclerView recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
         adapter = new PostAdapter(this, this);
@@ -51,25 +55,51 @@ public class MainActivity extends AppCompatActivity implements PostAdapter.OnPos
     }
 
     private void refresh() {
-        new AsyncTask<Void, Void, Blog.Posts>() {
+        new AsyncTask<Void, Void, List<Post>>() {
             @Override
-            protected Blog.Posts doInBackground(Void... params) {
+            protected List<Post> doInBackground(Void... params) {
                 try {
-                    if (checkNotConnected()) return new Blog.Posts();
+                    if (checkNotConnected()) return new ArrayList<>();
 
-                    Blog googleblog = blogger.blogs().get("10861780").setMaxPosts(50l).setKey(API_KEY).execute();
-                    return googleblog.getPosts();
+                    String[] blogIds = {"10861780", "5563501798919888465"};
+                    List<Post> list = new ArrayList<>();
+                    for (String id : blogIds) {
+                        try {
+                            list.addAll(blogger.blogs().get(id).setMaxPosts(50L).setKey(API_KEY).execute().getPosts().getItems());
+                        } catch (NullPointerException e) { /*ignored*/ }
+                    }
+
+                    sortDates(list);
+                    return list;
 
                     // Official Google Blog: 10861780
                     // Mike Louwman: 5563501798919888465
                 } catch (IOException e) {
                     e.printStackTrace();
-                    return new Blog.Posts();
+                    return new ArrayList<>();
                 }
             }
 
+            private void sortDates(List<Post> list) {
+                for (int i = list.size() - 1; i > 1; i--) {
+                    for (int j = 0; j < i; j++) {
+                        if (list.get(j).getPublished().getValue() < list.get(j+1).getPublished().getValue()) {
+                            Post temp = list.get(j);
+                            list.set(j, list.get(j + 1));
+                            list.set(j + 1, temp);
+                        }
+                    }
+                }
+                /*Collections.sort(list, new Comparator<Post>() {
+                    @Override
+                    public int compare(Post lhs, Post rhs) {
+                        return (int) (lhs.getPublished().getValue() - rhs.getPublished().getValue());
+                    }
+                });*/
+            }
+
             @Override
-            protected void onPostExecute(Blog.Posts posts) {
+            protected void onPostExecute(List<Post> posts) {
                 adapter.setData(posts);
                 adapter.notifyDataSetChanged();
             }

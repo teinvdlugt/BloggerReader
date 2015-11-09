@@ -73,7 +73,7 @@ public class BlogActivity extends AppCompatActivity implements PostAdapter.OnPos
             protected void onPostExecute(Void aVoid) {
                 bindViewHolder(holder);
                 if (blog.getPosts() != null && blog.getPosts().getItems() != null) {
-                    adapter.setData(blog.getPosts());
+                    adapter.setData(blog.getPosts().getItems());
                     adapter.notifyDataSetChanged();
                 }
             }

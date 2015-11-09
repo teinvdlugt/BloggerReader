@@ -8,24 +8,24 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.google.api.services.blogger.model.Blog;
 import com.google.api.services.blogger.model.Post;
 
 import java.text.DateFormat;
 import java.util.Date;
+import java.util.List;
 
 public class PostAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private static final int ITEM_VIEW_TYPE = 0;
     private static final int HEADER_VIEW_TYPE = 1;
 
-    private Blog.Posts data;
+    private List<Post> data;
     private Context context;
     private OnPostClickListener clickListener;
     private boolean header;
 
     private HeaderUpdateListener headerListener;
 
-    public PostAdapter(Context context, Blog.Posts data, OnPostClickListener clickListener) {
+    public PostAdapter(Context context, List<Post> data, OnPostClickListener clickListener) {
         this.data = data;
         this.context = context;
         this.clickListener = clickListener;
@@ -49,11 +49,11 @@ public class PostAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         this.headerListener = listener;
     }
 
-    public Blog.Posts getData() {
+    public List<Post> getData() {
         return data;
     }
 
-    public void setData(Blog.Posts data) {
+    public void setData(List<Post> data) {
         this.data = data;
     }
 
@@ -79,7 +79,7 @@ public class PostAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                     // A header is present
                     position--;
                 }
-                ((ViewHolder) holder).bind(data.getItems().get(position));
+                ((ViewHolder) holder).bind(data.get(position));
         }
     }
 
@@ -94,7 +94,7 @@ public class PostAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     @Override
     public int getItemCount() {
-        int items = data == null || data.getItems() == null ? 0 : data.getItems().size();
+        int items = data == null ? 0 : data.size();
         return items + (header ? 1 : 0);
     }
 
