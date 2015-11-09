@@ -82,7 +82,7 @@ public class BlogActivity extends AppCompatActivity implements PostAdapter.OnPos
 
     @Override
     public void onClickPost(Post post) {
-        PostActivity.openActivity(this, post.getBlog().getId(), post.getId());
+        PostActivity.openActivity(this, post.getBlog().getId(), post.getId(), post.getUrl());
     }
 
     @Override

@@ -1,8 +1,14 @@
 package com.teinvdlugt.android.bloggerreader;
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -19,6 +25,7 @@ import com.google.api.services.blogger.model.Blog;
 import com.google.api.services.blogger.model.Post;
 
 import java.io.IOException;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements PostAdapter.OnPostClickListener {
     public static final String API_KEY = "AIzaSyAsG_pjWPPXYWq68igzilu77ss0qRP5yM8";
@@ -71,7 +78,7 @@ public class MainActivity extends AppCompatActivity implements PostAdapter.OnPos
 
     @Override
     public void onClickPost(Post post) {
-        PostActivity.openActivity(this, post.getBlog().getId(), post.getId());
+        PostActivity.openActivity(this, post.getBlog().getId(), post.getId(), post.getUrl());
     }
 
     private boolean checkNotConnected() {
@@ -100,5 +107,20 @@ public class MainActivity extends AppCompatActivity implements PostAdapter.OnPos
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    public static boolean openURLInBrowser(Context context, String url) {
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+        List<ResolveInfo> activities = context.getPackageManager().queryIntentActivities(intent,
+                PackageManager.MATCH_DEFAULT_ONLY);
+        boolean safe = activities.size() > 0;
+        if (safe) context.startActivity(intent);
+        return safe;
+    }
+
+    public static void copyTextToClipboard(Context context, String label, String text) {
+        ClipboardManager clipboard = (ClipboardManager) context.getSystemService(CLIPBOARD_SERVICE);
+        ClipData clip = ClipData.newPlainText(label, text);
+        clipboard.setPrimaryClip(clip);
     }
 }

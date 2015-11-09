@@ -10,6 +10,7 @@ import android.support.v7.widget.Toolbar;
 import android.text.Html;
 import android.text.method.LinkMovementMethod;
 import android.util.TypedValue;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -35,10 +36,11 @@ import java.util.Date;
 import java.util.List;
 
 public class PostActivity extends AppCompatActivity {
-    private static final String BLOG_ID = "BLOD_ID";
-    private static final String POST_ID = "POST_ID";
+    public static final String BLOG_ID = "BLOD_ID";
+    public static final String POST_ID = "POST_ID";
+    public static final String POST_URL = "POST_URL";
 
-    private String blogId, postId;
+    private String blogId, postId, postUrl;
 
     private Post post;
     private List<ContentPiece> postContent = new ArrayList<>();
@@ -58,6 +60,7 @@ public class PostActivity extends AppCompatActivity {
 
         blogId = getIntent().getStringExtra(BLOG_ID);
         postId = getIntent().getStringExtra(POST_ID);
+        postUrl = getIntent().getStringExtra(POST_URL);
         dateFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
         blogger = new Blogger.Builder(
                 AndroidHttp.newCompatibleTransport(), AndroidJsonFactory.getDefaultInstance(), null).build();
@@ -195,19 +198,35 @@ public class PostActivity extends AppCompatActivity {
     }
 
     @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_post, menu);
+        return true;
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
                 finish();
                 return true;
+            case R.id.view_in_browser:
+            case R.id.copy_url:
+                String url = post != null && post.getUrl() != null ? post.getUrl() : postUrl;
+                if (url != null && item.getItemId() == R.id.view_in_browser)
+                    MainActivity.openURLInBrowser(this, url);
+                else if (url != null && item.getItemId() == R.id.copy_url)
+                    MainActivity.copyTextToClipboard(this, "Blogger url", url);
+                else return false;
+                return true;
         }
         return false;
     }
 
-    public static void openActivity(Context context, String blogId, String postId) {
+    public static void openActivity(Context context, String blogId, String postId, String url) {
         Intent intent = new Intent(context, PostActivity.class);
         intent.putExtra(POST_ID, postId);
         intent.putExtra(BLOG_ID, blogId);
+        intent.putExtra(POST_URL, url);
         context.startActivity(intent);
     }
 
