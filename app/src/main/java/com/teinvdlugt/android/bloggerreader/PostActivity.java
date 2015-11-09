@@ -45,10 +45,12 @@ public class PostActivity extends AppCompatActivity {
     private Post post;
     private List<ContentPiece> postContent = new ArrayList<>();
     private Blog blog;
-    private TextView titleTV, publishedTV, blogNameTV;
+    private TextView titleTV, publishedTV, blogNameTV, authorTV;
     private LinearLayout contentContainer;
     private Blogger blogger;
     private DateFormat dateFormat;
+
+    private AsyncTask<String, ProgressUpdateType, Void> task;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,12 +71,16 @@ public class PostActivity extends AppCompatActivity {
         publishedTV = (TextView) findViewById(R.id.published_time);
         contentContainer = (LinearLayout) findViewById(R.id.content_container);
         blogNameTV = (TextView) findViewById(R.id.blogName_textView);
+        authorTV = (TextView) findViewById(R.id.author_byline);
 
         refresh();
     }
 
     private void refresh() {
-        new AsyncTask<String, ProgressUpdateType, Void>() {
+        if (task != null) task.cancel(true);
+        task = new AsyncTask<String, ProgressUpdateType, Void>() {
+            private String authorByline;
+
             @Override
             protected Void doInBackground(String... params) {
                 try {
@@ -83,40 +89,80 @@ public class PostActivity extends AppCompatActivity {
 
                     if (isCancelled()) return null;
 
-                    String content = post.getContent();
-                    content = "<p>" + content + "</p>";
-                    content = content.replaceAll("<div class=\"separator\"", "</p><div class=\"separator\"");
-                    content = content.replaceAll("/></a></div>", "/></a></div><p>");
-
                     postContent.clear();
-                    Element body = Jsoup.parse(content).body();
-                    for (Element element : body.children()) {
-                        if ("p".equals(element.tagName()))
-                            postContent.add(new TextPiece(element.html()));
-                        else if ("div".equals(element.tagName())) {
-                            try {
-                                Element img = element.getElementsByTag("img").first();
-                                postContent.add(new Image(img.attr("src"),
-                                        Integer.parseInt(img.attr("width")), Integer.parseInt(img.attr("height"))));
-                            } catch (NullPointerException | NumberFormatException ignored) {
-                            }
-                        }
-                    }
+                    StringBuilder content = new StringBuilder(post.getContent());
+
+                    // Remove bad ending divs
+                    removeBadEndingDivs(content);
+
+                    // Author byline
+                    authorByline = parseAuthorByline(content);
+                    publishProgress(ProgressUpdateType.AUTHOR_BYLINE);
+
+                    // Content text and images
+                    parseTextAndImages(content);
 
                     publishProgress(ProgressUpdateType.CONTENT);
-                    if (isCancelled()) return null;
 
+                    if (isCancelled()) return null;
                     // Retrieve blog name and link
                     String blogId = post.getBlog().getId();
                     blog = blogger.blogs().get(blogId).setKey(MainActivity.API_KEY).execute();
-                    if (blog != null)
-                        publishProgress(ProgressUpdateType.BLOG_NAME);
+                    if (blog != null) publishProgress(ProgressUpdateType.BLOG_NAME);
 
                     return null;
                 } catch (IOException e) {
                     e.printStackTrace();
                     return null;
                 }
+            }
+
+            private void removeBadEndingDivs(StringBuilder content) {
+                String[] badDivClasses = {"post-author-name", "post-author-title", "post-author-team", "post-quote"};
+                for (String divClass : badDivClasses) {
+                    int index = content.indexOf("<div class=\"" + divClass);
+                    if (index == -1) continue;
+                    int end = content.indexOf("</div>", index) + 6;
+                    if (end == -1) continue;
+                    content.delete(index, end);
+                }
+            }
+
+            private String parseAuthorByline(StringBuilder content) {
+                int index = content.indexOf("<span class=\"byline-author\"");
+                if (index != -1) {
+                    int end = content.indexOf("</span>", index) + 7;
+                    String span = content.substring(index, end);
+                    content.delete(index, end);
+                    Element byline = Jsoup.parse(span).body().getElementsByClass("byline-author").first();
+                    String text = byline.html();
+                    if (text != null) return text;
+                }
+                return null;
+            }
+
+            private void parseTextAndImages(StringBuilder content) {
+                int index;
+                while ((index = content.indexOf("<img")) != -1) {
+                    int end = content.indexOf("/>", index) + 2;
+                    int width = 0, height = 0;
+                    String imgUrl = null;
+                    try {
+                        String imgTag = content.substring(index, end);
+                        Element img = Jsoup.parse(imgTag).body().getElementsByTag("img").first();
+                        imgUrl = img.attr("src");
+                        width = Integer.parseInt(img.attr("width"));
+                        height = Integer.parseInt(img.attr("height"));
+                    } catch (NumberFormatException | NullPointerException e) {
+                        e.printStackTrace();
+                        content.delete(index, end);
+                    }
+                    String textBeforeImg = content.substring(0, index);
+                    postContent.add(new TextPiece(textBeforeImg));
+                    if (imgUrl != null) postContent.add(new Image(imgUrl, width, height));
+                    content.delete(0, end);
+                }
+                postContent.add(new TextPiece(content.toString()));
             }
 
             @Override
@@ -139,9 +185,19 @@ public class PostActivity extends AppCompatActivity {
                             }
                         });
                         break;
+                    case AUTHOR_BYLINE:
+                        if (authorByline == null) {
+                            authorTV.setVisibility(View.GONE);
+                            authorTV.setText("");
+                        } else {
+                            authorTV.setVisibility(View.VISIBLE);
+                            authorTV.setText(Html.fromHtml(authorByline));
+                        }
+                        break;
                 }
             }
-        }.execute(blogId, postId);
+        };
+        task.execute(blogId, postId);
     }
 
     private void setDate(long millis) {
@@ -230,6 +286,11 @@ public class PostActivity extends AppCompatActivity {
         context.startActivity(intent);
     }
 
+    @Override
+    protected void onStop() {
+        super.onStop();
+        task.cancel(true);
+    }
 
     private abstract class ContentPiece {
         final String content;
@@ -255,5 +316,11 @@ public class PostActivity extends AppCompatActivity {
         }
     }
 
-    private enum ProgressUpdateType {TITLE_PUBLISHED, CONTENT, BLOG_NAME}
+    private class AuthorByline extends ContentPiece {
+        public AuthorByline(String content) {
+            super(content);
+        }
+    }
+
+    private enum ProgressUpdateType {TITLE_PUBLISHED, CONTENT, BLOG_NAME, AUTHOR_BYLINE}
 }

@@ -48,9 +48,9 @@
                     android:id="@+id/blogName_textView"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:visibility="gone"
+                    android:textColor="@color/blog_link_text_color"
                     android:textSize="16sp"
-                    android:textColor="@color/blog_link_text_color"/>
+                    android:visibility="gone" />
 
                 <TextView
                     android:id="@+id/published_time"
@@ -65,6 +65,18 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical" />
+
+            <TextView
+                android:id="@+id/author_byline"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:textSize="18sp"
+                android:visibility="gone"
+                tools:text="Posted by Sundar Pichai, CEO, Google"
+                tools:visibility="visible" />
         </LinearLayout>
     </android.support.v4.widget.NestedScrollView>
 </android.support.design.widget.CoordinatorLayout>
