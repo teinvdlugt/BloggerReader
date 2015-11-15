@@ -16,10 +16,10 @@
     <string name="add_blog_dialog_title">Add a blog to follow</string>
     <string name="loading_blog">Loading blog…</string>
     <string name="blog_not_found">Sorry, no blog was found with the url %s</string>
-    <string name="do_you_want_to_follow_this_blog">Do you want to follow this blog?</string>
+    <string name="do_you_want_to_follow_this_blog" formatted="false">Do you want to follow this blog?\nName: %sURL: %s</string>
     <string name="name_colon">"Name: "</string>
     <string name="url_colon">"URL: "</string>
     <string name="follow">Follow</string>
-    <string name="following_blog">Following blog</string>
+    <string name="following_blog">Following blog %s</string>
     <string name="following_blog_error">Something went wrong</string>
 </resources>

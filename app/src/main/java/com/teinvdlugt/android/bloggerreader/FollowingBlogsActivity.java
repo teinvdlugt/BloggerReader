@@ -11,6 +11,8 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.Editable;
+import android.text.Html;
+import android.text.SpannableString;
 import android.text.TextWatcher;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -138,18 +140,15 @@ public class FollowingBlogsActivity extends AppCompatActivity {
     }
 
     private void showAddBlogDialog(final Blog blog) {
-        StringBuilder msg = new StringBuilder();
-        msg.append(getString(R.string.do_you_want_to_follow_this_blog));
-        msg.append("\n").append(getString(R.string.name_colon)).append(blog.getName());
-        msg.append("\n").append(getString(R.string.url_colon)).append(blog.getUrl());
-
+        String msg = getString(R.string.do_you_want_to_follow_this_blog, "<b>" + blog.getName() + "</b>\n", blog.getUrl());
         new AlertDialog.Builder(this)
-                .setMessage(msg.toString())
+                .setMessage(Html.fromHtml(msg))
                 .setPositiveButton(R.string.follow, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         if (IOUtils.saveBlog(FollowingBlogsActivity.this, blog)) {
-                            Snackbar.make(findViewById(R.id.recyclerView), R.string.following_blog, Snackbar.LENGTH_LONG).show();
+                            Snackbar.make(findViewById(R.id.recyclerView),
+                                    getString(R.string.following_blog, blog.getName()), Snackbar.LENGTH_LONG).show();
                             List<Blog> blogs = IOUtils.blogsFollowing(FollowingBlogsActivity.this);
                             adapter.setData(blogs);
                             adapter.notifyItemInserted(adapter.getItemCount() - 1);

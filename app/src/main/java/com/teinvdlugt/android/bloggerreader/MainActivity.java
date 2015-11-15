@@ -46,7 +46,6 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
 
         blogger = IOUtils.createBloggerInstance();
-        blogs = IOUtils.blogsFollowing(this);
 
         // Find views
         drawerLayout = (DrawerLayout) findViewById(R.id.drawerLayout);
@@ -74,11 +73,12 @@ public class MainActivity extends AppCompatActivity
                 try {
                     if (IOUtils.checkNotConnected(MainActivity.this)) return new ArrayList<>();
 
-                    String[] blogIds = {"10861780", "5563501798919888465"};
+                    blogs = IOUtils.blogsFollowing(MainActivity.this);
                     List<Post> list = new ArrayList<>();
-                    for (String id : blogIds) {
+                    for (Blog blog : blogs) {
                         try {
-                            list.addAll(blogger.blogs().get(id).setMaxPosts(50L).setKey(IOUtils.API_KEY).execute().getPosts().getItems());
+                            list.addAll(blogger.blogs().get(blog.getId()).setMaxPosts(50L).setKey(IOUtils.API_KEY)
+                                    .execute().getPosts().getItems());
                         } catch (NullPointerException e) { /*ignored*/ }
                     }
 
