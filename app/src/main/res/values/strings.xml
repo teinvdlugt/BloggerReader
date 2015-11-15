@@ -4,4 +4,10 @@
     <string name="posts">Posts</string>
     <string name="view_in_browser">View in browser</string>
     <string name="copy_url">Copy URL</string>
+    <string name="home">Home</string>
+    <string name="follow_blog">Follow blog</string>
+    <string name="xs_open_drawer">Open drawer</string>
+    <string name="xs_close_drawer">Close drawer</string>
+    <string name="following_blogs_activity_title">Following Blogs</string>
+    <string name="unknown_blog">Unknown blog name</string>
 </resources>

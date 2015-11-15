@@ -62,7 +62,7 @@ public class BlogActivity extends AppCompatActivity implements PostAdapter.OnPos
                 try {
                     blog = blogger.blogs().get(blogId)
                             .setMaxPosts(100L)
-                            .setKey(MainActivity.API_KEY).execute();
+                            .setKey(IOUtils.API_KEY).execute();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

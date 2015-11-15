@@ -6,16 +6,17 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
+import android.support.design.widget.NavigationView;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.view.Menu;
 import android.view.MenuItem;
 
 import com.google.api.client.extensions.android.http.AndroidHttp;
@@ -25,27 +26,41 @@ import com.google.api.services.blogger.model.Post;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements PostAdapter.OnPostClickListener {
-    public static final String API_KEY = "AIzaSyAsG_pjWPPXYWq68igzilu77ss0qRP5yM8";
+public class MainActivity extends AppCompatActivity
+        implements NavigationView.OnNavigationItemSelectedListener,
+        PostAdapter.OnPostClickListener {
+    private ActionBarDrawerToggle toggle;
+    private DrawerLayout drawerLayout;
+    private NavigationView navigationView;
+    private Toolbar toolbar;
 
     private PostAdapter adapter;
     private Blogger blogger;
     private String[] blogIds;
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
 
         blogger = new Blogger.Builder(
                 AndroidHttp.newCompatibleTransport(), AndroidJsonFactory.getDefaultInstance(), null).build();
         blogIds = IOUtils.blogsFollowing(this);
+
+        // Find views
+        drawerLayout = (DrawerLayout) findViewById(R.id.drawerLayout);
+        navigationView = (NavigationView) findViewById(R.id.navigationView);
+        toolbar = (Toolbar) findViewById(R.id.toolbar);
+
+        // Drawer layout and stuff
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        navigationView.setNavigationItemSelectedListener(this);
+        toggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar,
+                R.string.xs_open_drawer, R.string.xs_close_drawer);
 
         RecyclerView recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
         adapter = new PostAdapter(this, this);
@@ -59,13 +74,13 @@ public class MainActivity extends AppCompatActivity implements PostAdapter.OnPos
             @Override
             protected List<Post> doInBackground(Void... params) {
                 try {
-                    if (checkNotConnected()) return new ArrayList<>();
+                    if (IOUtils.checkNotConnected(MainActivity.this)) return new ArrayList<>();
 
                     String[] blogIds = {"10861780", "5563501798919888465"};
                     List<Post> list = new ArrayList<>();
                     for (String id : blogIds) {
                         try {
-                            list.addAll(blogger.blogs().get(id).setMaxPosts(50L).setKey(API_KEY).execute().getPosts().getItems());
+                            list.addAll(blogger.blogs().get(id).setMaxPosts(50L).setKey(IOUtils.API_KEY).execute().getPosts().getItems());
                         } catch (NullPointerException e) { /*ignored*/ }
                     }
 
@@ -83,19 +98,13 @@ public class MainActivity extends AppCompatActivity implements PostAdapter.OnPos
             private void sortDates(List<Post> list) {
                 for (int i = list.size() - 1; i > 1; i--) {
                     for (int j = 0; j < i; j++) {
-                        if (list.get(j).getPublished().getValue() < list.get(j+1).getPublished().getValue()) {
+                        if (list.get(j).getPublished().getValue() < list.get(j + 1).getPublished().getValue()) {
                             Post temp = list.get(j);
                             list.set(j, list.get(j + 1));
                             list.set(j + 1, temp);
                         }
                     }
                 }
-                /*Collections.sort(list, new Comparator<Post>() {
-                    @Override
-                    public int compare(Post lhs, Post rhs) {
-                        return (int) (lhs.getPublished().getValue() - rhs.getPublished().getValue());
-                    }
-                });*/
             }
 
             @Override
@@ -107,36 +116,26 @@ public class MainActivity extends AppCompatActivity implements PostAdapter.OnPos
     }
 
     @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        toggle.syncState();
+    }
+
+    @Override
     public void onClickPost(Post post) {
         PostActivity.openActivity(this, post.getBlog().getId(), post.getId(), post.getUrl());
     }
 
-    private boolean checkNotConnected() {
-        ConnectivityManager connManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo networkInfo = connManager.getActiveNetworkInfo();
-        return networkInfo == null || !networkInfo.isConnected();
-    }
-
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
+    public boolean onNavigationItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.home:
+                break;
+            case R.id.follow_blog:
+                Intent intent = new Intent(this, FollowingBlogsActivity.class);
+                startActivity(intent);
         }
-
-        return super.onOptionsItemSelected(item);
+        return false;
     }
 
     public static boolean openURLInBrowser(Context context, String url) {
@@ -149,8 +148,10 @@ public class MainActivity extends AppCompatActivity implements PostAdapter.OnPos
     }
 
     public static void copyTextToClipboard(Context context, String label, String text) {
-        ClipboardManager clipboard = (ClipboardManager) context.getSystemService(CLIPBOARD_SERVICE);
-        ClipData clip = ClipData.newPlainText(label, text);
-        clipboard.setPrimaryClip(clip);
+        if (Build.VERSION.SDK_INT >= 9) {
+            ClipboardManager clipboard = (ClipboardManager) context.getSystemService(CLIPBOARD_SERVICE);
+            ClipData clip = ClipData.newPlainText(label, text);
+            clipboard.setPrimaryClip(clip);
+        }
     }
 }

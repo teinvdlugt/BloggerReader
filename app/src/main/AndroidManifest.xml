@@ -28,6 +28,9 @@
         <activity
             android:name=".BlogActivity"
             android:label="Blog Viewer" />
-    </application>
 
+        <activity
+            android:name=".FollowingBlogsActivity"
+            android:label="@string/following_blogs_activity_title" />
+    </application>
 </manifest>

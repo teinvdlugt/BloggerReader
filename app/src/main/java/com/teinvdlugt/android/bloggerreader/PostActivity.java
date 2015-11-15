@@ -84,7 +84,7 @@ public class PostActivity extends AppCompatActivity {
             @Override
             protected Void doInBackground(String... params) {
                 try {
-                    post = blogger.posts().get(params[0], params[1]).setKey(MainActivity.API_KEY).execute();
+                    post = blogger.posts().get(params[0], params[1]).setKey(IOUtils.API_KEY).execute();
                     publishProgress(ProgressUpdateType.TITLE_PUBLISHED);
 
                     if (isCancelled()) return null;
@@ -107,7 +107,7 @@ public class PostActivity extends AppCompatActivity {
                     if (isCancelled()) return null;
                     // Retrieve blog name and link
                     String blogId = post.getBlog().getId();
-                    blog = blogger.blogs().get(blogId).setKey(MainActivity.API_KEY).execute();
+                    blog = blogger.blogs().get(blogId).setKey(IOUtils.API_KEY).execute();
                     if (blog != null) publishProgress(ProgressUpdateType.BLOG_NAME);
 
                     return null;
