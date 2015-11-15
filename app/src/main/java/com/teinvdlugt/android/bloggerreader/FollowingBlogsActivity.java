@@ -204,14 +204,23 @@ public class FollowingBlogsActivity extends AppCompatActivity {
 
         class ViewHolder extends RecyclerView.ViewHolder {
             private TextView nameTV, urlTV;
+            private Blog blog;
 
             public ViewHolder(View itemView) {
                 super(itemView);
                 nameTV = (TextView) itemView.findViewById(R.id.blog_name);
                 urlTV = (TextView) itemView.findViewById(R.id.blog_url);
+                itemView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        BlogActivity.openBlogActivity(FollowingBlogsActivity.this, blog.getId());
+                    }
+                });
             }
 
             public void bind(Blog data) {
+                this.blog = data;
+
                 if (data.getName() == null) nameTV.setText(R.string.unknown_blog);
                 else nameTV.setText(data.getName());
                 if (data.getUrl() == null) urlTV.setVisibility(View.GONE);
