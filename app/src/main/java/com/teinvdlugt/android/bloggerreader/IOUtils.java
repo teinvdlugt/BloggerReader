@@ -4,10 +4,15 @@ import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 
+import com.google.api.client.extensions.android.http.AndroidHttp;
+import com.google.api.client.extensions.android.json.AndroidJsonFactory;
+import com.google.api.services.blogger.Blogger;
 import com.google.api.services.blogger.model.Blog;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -22,10 +27,8 @@ public class IOUtils {
     public static final String BLOGS_FOLLOWING_FILE_NAME = "blogs_following";
 
     public static List<Blog> blogsFollowing(Context context) {
-        // File should have the following structure:
-        // blog1Id,blog1Name,blog1Url\n
-        // blog2Id,blog2Name,blog2Url\n
-        // etc. etc.
+        // See saveBlogs(Context context, List<Blog> blogs) method for
+        // info about file structure
         try {
             FileInputStream fis = context.openFileInput(BLOGS_FOLLOWING_FILE_NAME);
             InputStreamReader isr = new InputStreamReader(fis, "UTF-8");
@@ -42,11 +45,48 @@ public class IOUtils {
                 result.add(blog);
             }
 
+            isr.close();
             return result;
         } catch (IOException e) {
             e.printStackTrace();
             return new ArrayList<>();
         }
+    }
+
+    public static boolean saveBlog(Context context, Blog blog) {
+        // TODO: 15-11-2015 Use Context.MODE_APPEND
+        List<Blog> saved = blogsFollowing(context);
+        saved.add(blog);
+        return saveBlogs(context, saved);
+    }
+
+    private static boolean saveBlogs(Context context, List<Blog> blogs) {
+        // File should have the following structure:
+        // blog1Id,blog1Name,blog1Url\n
+        // blog2Id,blog2Name,blog2Url\n
+        // etc. etc.
+        try {
+            FileOutputStream fos = context.openFileOutput(BLOGS_FOLLOWING_FILE_NAME, Context.MODE_PRIVATE);
+
+            StringBuilder sb = new StringBuilder();
+            for (Blog blog : blogs) {
+                sb.append(blog.getId()).append(",")
+                        .append(blog.getName()).append(",")
+                        .append(blog.getUrl()).append("\n");
+            }
+
+            fos.write(sb.toString().getBytes());
+            fos.close();
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public static Blogger createBloggerInstance() {
+        return new Blogger.Builder(
+                AndroidHttp.newCompatibleTransport(), AndroidJsonFactory.getDefaultInstance(), null).build();
     }
 
     public static boolean checkNotConnected(Context context) {

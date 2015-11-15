@@ -19,9 +19,8 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 
-import com.google.api.client.extensions.android.http.AndroidHttp;
-import com.google.api.client.extensions.android.json.AndroidJsonFactory;
 import com.google.api.services.blogger.Blogger;
+import com.google.api.services.blogger.model.Blog;
 import com.google.api.services.blogger.model.Post;
 
 import java.io.IOException;
@@ -38,7 +37,7 @@ public class MainActivity extends AppCompatActivity
 
     private PostAdapter adapter;
     private Blogger blogger;
-    private String[] blogIds;
+    private List<Blog> blogs;
 
     @SuppressWarnings("ConstantConditions")
     @Override
@@ -46,9 +45,8 @@ public class MainActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        blogger = new Blogger.Builder(
-                AndroidHttp.newCompatibleTransport(), AndroidJsonFactory.getDefaultInstance(), null).build();
-        blogIds = IOUtils.blogsFollowing(this);
+        blogger = IOUtils.createBloggerInstance();
+        blogs = IOUtils.blogsFollowing(this);
 
         // Find views
         drawerLayout = (DrawerLayout) findViewById(R.id.drawerLayout);

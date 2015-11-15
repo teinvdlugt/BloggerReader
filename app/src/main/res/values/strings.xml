@@ -10,4 +10,16 @@
     <string name="xs_close_drawer">Close drawer</string>
     <string name="following_blogs_activity_title">Following Blogs</string>
     <string name="unknown_blog">Unknown blog name</string>
+    <string name="add">Add</string>
+    <string name="cancel">Cancel</string>
+    <string name="blog_url">Blog URL</string>
+    <string name="add_blog_dialog_title">Add a blog to follow</string>
+    <string name="loading_blog">Loading blog…</string>
+    <string name="blog_not_found">Sorry, no blog was found with the url %s</string>
+    <string name="do_you_want_to_follow_this_blog">Do you want to follow this blog?</string>
+    <string name="name_colon">"Name: "</string>
+    <string name="url_colon">"URL: "</string>
+    <string name="follow">Follow</string>
+    <string name="following_blog">Following blog</string>
+    <string name="following_blog_error">Something went wrong</string>
 </resources>
