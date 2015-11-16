@@ -3,6 +3,9 @@ package com.teinvdlugt.android.bloggerreader;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.Build;
+import android.support.annotation.ColorRes;
+import android.support.annotation.NonNull;
 
 import com.google.api.client.extensions.android.http.AndroidHttp;
 import com.google.api.client.extensions.android.json.AndroidJsonFactory;
@@ -15,6 +18,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 public class IOUtils {
@@ -80,6 +84,37 @@ public class IOUtils {
         } catch (IOException e) {
             e.printStackTrace();
             return false;
+        }
+    }
+
+    public static boolean blogFollowed(Context context, String blogId) {
+        List<String> blogIds = blogsFollowingIds(context);
+        return blogIds.contains(blogId);
+    }
+
+    public static List<String> blogsFollowingIds(Context context) {
+        List<Blog> blogs = blogsFollowing(context);
+        List<String> blogIds = new ArrayList<>();
+        for (Blog blog : blogs) {
+            blogIds.add(blog.getId());
+        }
+        return blogIds;
+    }
+
+    public static void unfollowBlog(Context context, @NonNull String blogId) {
+        List<Blog> saved = blogsFollowing(context);
+        for (Iterator<Blog> it = saved.iterator(); it.hasNext(); ) {
+            if (blogId.equals(it.next().getId())) it.remove();
+        }
+        overwriteBlogs(context, saved);
+    }
+
+
+    public static int getColor(Context context, @ColorRes int color) {
+        if (Build.VERSION.SDK_INT >= 23) {
+            return context.getColor(color);
+        } else {
+            return context.getResources().getColor(color);
         }
     }
 

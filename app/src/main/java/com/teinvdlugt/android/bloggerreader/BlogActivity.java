@@ -2,6 +2,8 @@ package com.teinvdlugt.android.bloggerreader;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -11,10 +13,9 @@ import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.TextView;
 
-import com.google.api.client.extensions.android.http.AndroidHttp;
-import com.google.api.client.extensions.android.json.AndroidJsonFactory;
 import com.google.api.services.blogger.Blogger;
 import com.google.api.services.blogger.model.Blog;
 import com.google.api.services.blogger.model.Post;
@@ -29,6 +30,9 @@ public class BlogActivity extends AppCompatActivity implements PostAdapter.OnPos
     private Blog blog;
     private String blogId;
     private PostAdapter adapter;
+    private boolean followingBlogDetermined;
+    private boolean followingBlog;
+    private Blogger blogger;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,21 +56,42 @@ public class BlogActivity extends AppCompatActivity implements PostAdapter.OnPos
         refresh();
     }
 
+    private enum ProgressUpdateType {BLOG, FOLLOWING_BLOG}
+
     private void refresh() {
-        new AsyncTask<Void, Void, Void>() {
+        new AsyncTask<Void, ProgressUpdateType, Void>() {
             @Override
             protected Void doInBackground(Void... params) {
-                Blogger blogger = new Blogger.Builder(
-                        AndroidHttp.newCompatibleTransport(), AndroidJsonFactory.getDefaultInstance(), null).build();
+                if (blogger == null) blogger = IOUtils.createBloggerInstance();
 
                 try {
                     blog = blogger.blogs().get(blogId)
                             .setMaxPosts(100L)
                             .setKey(IOUtils.API_KEY).execute();
+                    publishProgress(ProgressUpdateType.BLOG);
+
+                    followingBlog = IOUtils.blogFollowed(BlogActivity.this, blog.getId());
+                    publishProgress(ProgressUpdateType.FOLLOWING_BLOG);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
                 return null;
+            }
+
+            @Override
+            protected void onProgressUpdate(ProgressUpdateType... type) {
+                switch (type[0]) {
+                    case BLOG:
+                        bindViewHolder(holder);
+                        break;
+                    case FOLLOWING_BLOG:
+                        followingBlogDetermined = true;
+                        if (holder != null && holder.followButton != null) {
+                            holder.followButton.setVisibility(View.VISIBLE);
+                            if (followingBlog) setButtonTextFollowing();
+                            else setButtonTextFollow();
+                        }
+                }
             }
 
             @Override
@@ -78,6 +103,22 @@ public class BlogActivity extends AppCompatActivity implements PostAdapter.OnPos
                 }
             }
         }.execute();
+    }
+
+    private void onClickFollowButton() {
+        if (blog == null || !followingBlogDetermined) return;
+
+        if (followingBlog) {
+            // Unfollow blog
+            IOUtils.unfollowBlog(this, blog.getId());
+            followingBlog = false;
+            setButtonTextFollow();
+        } else {
+            // Follow blog
+            IOUtils.saveBlog(this, blog);
+            followingBlog = true;
+            setButtonTextFollowing();
+        }
     }
 
     @Override
@@ -99,7 +140,25 @@ public class BlogActivity extends AppCompatActivity implements PostAdapter.OnPos
         if (blog != null) {
             if (blog.getName() != null) holder.nameTV.setText(blog.getName());
             if (blog.getDescription() != null) holder.descTV.setText(blog.getDescription());
+            if (followingBlogDetermined) {
+                holder.followButton.setVisibility(View.VISIBLE);
+                if (followingBlog) setButtonTextFollowing();
+                else setButtonTextFollow();
+            }
         }
+    }
+
+    private void setButtonTextFollow() {
+        holder.followButton.setText(R.string.follow);
+        holder.followButton.getBackground().setColorFilter(0xFFFFFFFF, PorterDuff.Mode.MULTIPLY);
+        holder.followButton.setTextColor(Color.BLACK);
+    }
+
+    private void setButtonTextFollowing() {
+        holder.followButton.setText(R.string.following);
+        holder.followButton.getBackground().setColorFilter(
+                IOUtils.getColor(this, R.color.colorAccent), PorterDuff.Mode.MULTIPLY);
+        holder.followButton.setTextColor(Color.WHITE);
     }
 
     @Override
@@ -120,11 +179,20 @@ public class BlogActivity extends AppCompatActivity implements PostAdapter.OnPos
 
     private class ViewHolder extends RecyclerView.ViewHolder {
         private TextView nameTV, descTV;
+        private Button followButton;
 
         public ViewHolder(View itemView) {
             super(itemView);
             nameTV = (TextView) itemView.findViewById(R.id.name);
             descTV = (TextView) itemView.findViewById(R.id.description);
+            followButton = (Button) itemView.findViewById(R.id.follow_button);
+
+            followButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    onClickFollowButton();
+                }
+            });
         }
     }
 }

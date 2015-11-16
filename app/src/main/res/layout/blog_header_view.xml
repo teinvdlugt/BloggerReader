@@ -23,6 +23,13 @@
         android:textSize="16sp"
         tools:text="Insights from Googlers into our products" />
 
+    <Button
+        android:id="@+id/follow_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/follow"
+        android:visibility="gone" />
+
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
