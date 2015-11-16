@@ -128,6 +128,7 @@ public class MainActivity extends AppCompatActivity
     public boolean onNavigationItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.home:
+                navigationView.setCheckedItem(R.id.home);
                 break;
             case R.id.follow_blog:
                 Intent intent = new Intent(this, FollowingBlogsActivity.class);
@@ -146,7 +147,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     public static void copyTextToClipboard(Context context, String label, String text) {
-        if (Build.VERSION.SDK_INT >= 9) {
+        if (Build.VERSION.SDK_INT >= 11) {
             ClipboardManager clipboard = (ClipboardManager) context.getSystemService(CLIPBOARD_SERVICE);
             ClipData clip = ClipData.newPlainText(label, text);
             clipboard.setPrimaryClip(clip);
