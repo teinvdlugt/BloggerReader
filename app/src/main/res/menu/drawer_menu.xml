@@ -3,9 +3,14 @@
     <group android:checkableBehavior="single">
         <item
             android:id="@+id/home"
+            android:checked="true"
             android:title="@string/home" />
-        <item
-            android:id="@+id/follow_blog"
-            android:title="@string/follow_blog" />
+        <item android:title="@string/settings">
+            <menu>
+                <item
+                    android:id="@+id/follow_blog"
+                    android:title="@string/follow_blog" />
+            </menu>
+        </item>
     </group>
 </menu>
