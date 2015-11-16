@@ -11,7 +11,6 @@ import com.google.api.services.blogger.model.Blog;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -27,7 +26,7 @@ public class IOUtils {
     public static final String BLOGS_FOLLOWING_FILE_NAME = "blogs_following";
 
     public static List<Blog> blogsFollowing(Context context) {
-        // See saveBlogs(Context context, List<Blog> blogs) method for
+        // See overwriteBlogs(Context context, List<Blog> blogs) method for
         // info about file structure
         try {
             FileInputStream fis = context.openFileInput(BLOGS_FOLLOWING_FILE_NAME);
@@ -57,10 +56,10 @@ public class IOUtils {
         // TODO: 15-11-2015 Use Context.MODE_APPEND
         List<Blog> saved = blogsFollowing(context);
         saved.add(blog);
-        return saveBlogs(context, saved);
+        return overwriteBlogs(context, saved);
     }
 
-    private static boolean saveBlogs(Context context, List<Blog> blogs) {
+    public static boolean overwriteBlogs(Context context, List<Blog> blogs) {
         // File should have the following structure:
         // blog1Id,blog1Name,blog1Url\n
         // blog2Id,blog2Name,blog2Url\n

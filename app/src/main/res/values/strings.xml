@@ -22,4 +22,6 @@
     <string name="follow">Follow</string>
     <string name="following_blog">Following blog %s</string>
     <string name="following_blog_error">Something went wrong</string>
+    <string name="unfollow">Unfollow</string>
+    <string name="unfollow_blog_confirmation_message"><![CDATA[Are you sure you want to unfollow <b>%s</b>?]]></string>
 </resources>

@@ -12,11 +12,11 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.Html;
-import android.text.SpannableString;
 import android.text.TextWatcher;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -168,14 +168,39 @@ public class FollowingBlogsActivity extends AppCompatActivity {
     }
 
     @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_following_blogs, menu);
+        return true;
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
                 finish();
                 return true;
+            case R.id.add_blog_action:
+                onClickAddBlog(null);
             default:
                 return true;
         }
+    }
+
+    private void deleteBlog(final Blog blog) {
+        new AlertDialog.Builder(this)
+                .setTitle("Unfollow blog")
+                .setMessage(Html.fromHtml(getString(R.string.unfollow_blog_confirmation_message, blog.getName())))
+                .setPositiveButton(R.string.unfollow, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        int position = adapter.data.indexOf(blog);
+                        if (position != -1 && adapter.data.remove(blog)) {
+                            IOUtils.overwriteBlogs(FollowingBlogsActivity.this, adapter.data);
+                            adapter.notifyItemRemoved(position);
+                        }
+                    }
+                }).setNegativeButton(R.string.cancel, null)
+                .create().show();
     }
 
     private class FollowingBlogsAdapter extends RecyclerView.Adapter<FollowingBlogsAdapter.ViewHolder> {
@@ -213,6 +238,13 @@ public class FollowingBlogsActivity extends AppCompatActivity {
                     @Override
                     public void onClick(View v) {
                         BlogActivity.openBlogActivity(FollowingBlogsActivity.this, blog.getId());
+                    }
+                });
+                itemView.setOnLongClickListener(new View.OnLongClickListener() {
+                    @Override
+                    public boolean onLongClick(View v) {
+                        deleteBlog(blog);
+                        return false;
                     }
                 });
             }
