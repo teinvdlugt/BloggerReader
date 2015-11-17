@@ -25,4 +25,6 @@
     <string name="unfollow">Unfollow</string>
     <string name="unfollow_blog_confirmation_message"><![CDATA[Are you sure you want to unfollow <b>%s</b>?]]></string>
     <string name="following">Following</string>
+    <string name="notification_title">Blogger</string>
+    <string name="notification_message">"New posts by "</string>
 </resources>

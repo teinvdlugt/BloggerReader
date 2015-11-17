@@ -1,5 +1,6 @@
 package com.teinvdlugt.android.bloggerreader;
 
+import android.app.AlarmManager;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -10,6 +11,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.design.widget.NavigationView;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -31,9 +33,7 @@ public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener,
         PostAdapter.OnPostClickListener {
     private ActionBarDrawerToggle toggle;
-    private DrawerLayout drawerLayout;
     private NavigationView navigationView;
-    private Toolbar toolbar;
 
     private PostAdapter adapter;
     private Blogger blogger;
@@ -44,13 +44,14 @@ public class MainActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
 
         blogger = IOUtils.createBloggerInstance();
 
         // Find views
-        drawerLayout = (DrawerLayout) findViewById(R.id.drawerLayout);
+        DrawerLayout drawerLayout = (DrawerLayout) findViewById(R.id.drawerLayout);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         navigationView = (NavigationView) findViewById(R.id.navigationView);
-        toolbar = (Toolbar) findViewById(R.id.toolbar);
 
         // Drawer layout and stuff
         setSupportActionBar(toolbar);
@@ -133,6 +134,13 @@ public class MainActivity extends AppCompatActivity
             case R.id.follow_blog:
                 Intent intent = new Intent(this, FollowingBlogsActivity.class);
                 startActivity(intent);
+                break;
+            case R.id.notification_test:
+                List<String> blogNames = new ArrayList<>();
+                blogNames.add("Official Google Blog");
+                blogNames.add("Research Blog");
+                blogNames.add("Mike Louwman");
+                Receiver.issueNotification(this, blogNames);
         }
         return false;
     }
