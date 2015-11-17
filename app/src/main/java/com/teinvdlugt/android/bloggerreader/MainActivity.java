@@ -139,7 +139,7 @@ public class MainActivity extends AppCompatActivity
                 List<String> blogNames = new ArrayList<>();
                 blogNames.add("Official Google Blog");
                 blogNames.add("Research Blog");
-                blogNames.add("Mike Louwman");
+                blogNames.add("Als docent...");
                 Receiver.issueNotification(this, blogNames);
         }
         return false;

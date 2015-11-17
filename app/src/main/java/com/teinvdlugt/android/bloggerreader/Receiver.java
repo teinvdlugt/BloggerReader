@@ -15,7 +15,6 @@ import com.google.api.services.blogger.model.Blog;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -75,7 +74,9 @@ public class Receiver extends BroadcastReceiver {
             message.append(blogNames.get(i));
             if (i == blogNames.size() - 1)
                 message.append(".");
-            else if (i != 1)
+            else if (i == blogNames.size() - 2)
+                message.append(" and ");
+            else
                 message.append(", ");
         }
 
