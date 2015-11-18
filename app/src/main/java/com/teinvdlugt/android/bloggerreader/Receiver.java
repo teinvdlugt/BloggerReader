@@ -7,6 +7,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.AsyncTask;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 
@@ -16,13 +17,12 @@ import com.google.api.services.blogger.model.Blog;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class Receiver extends BroadcastReceiver {
     private static final int NOTIFICATION_ID = 0;
 
     @Override
-    public void onReceive(Context context, Intent intent) {
+    public void onReceive(final Context context, Intent intent) {
         PreferenceManager.setDefaultValues(context, R.xml.preferences, false);
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
         boolean notifications = preferences.getBoolean(AlarmUtils.NOTIFICATION_PREFERENCE_KEY, true);
@@ -41,30 +41,42 @@ public class Receiver extends BroadcastReceiver {
 
         if (IOUtils.checkNotConnected(context)) return;
 
-        try {
-            List<Blog> blogsWithNewPosts = new ArrayList<>();
+        new AsyncTask<Void, Void, List<String>>() {
+            @Override
+            protected List<String> doInBackground(Void... params) {
+                try {
+                    List<Blog> blogsWithNewPosts = new ArrayList<>();
 
-            List<Blog> following = IOUtils.blogsFollowing(context);
-            Map<String, String> lastPostIds = IOUtils.getLastPostIds(context);
+                    List<Blog> following = IOUtils.blogsFollowing(context);
+                    SharedPreferences pref = context.getSharedPreferences(IOUtils.LAST_POST_ID_PREFERENCES, Context.MODE_PRIVATE);
 
-            Blogger blogger = IOUtils.createBloggerInstance();
-            for (Blog blog : following) {
-                String newPostId = blogger.blogs().get(blog.getId()).setMaxPosts(1L)
-                        .setKey(IOUtils.API_KEY).execute().getPosts().getItems().get(0).getId();
-                String oldPostId = lastPostIds.get(blog.getId());
+                    Blogger blogger = IOUtils.createBloggerInstance();
+                    for (Blog blog : following) {
+                        String newPostId = blogger.blogs().get(blog.getId()).setMaxPosts(1L)
+                                .setKey(IOUtils.API_KEY).execute().getPosts().getItems().get(0).getId();
+                        String oldPostId = pref.getString(blog.getId(), null);
 
-                if (newPostId != null && !newPostId.equals(oldPostId)) {
-                    // New post available!
-                    blogsWithNewPosts.add(blog);
+                        if (newPostId != null && oldPostId != null && !newPostId.equals(oldPostId)) {
+                            // New post available!
+                            blogsWithNewPosts.add(blog);
+                        }
+                    }
+
+                    if (!blogsWithNewPosts.isEmpty())
+                        return names(blogsWithNewPosts);
+                    return null;
+                } catch (NullPointerException | IOException e) {
+                    e.printStackTrace();
+                    return null;
                 }
             }
 
-            if (!blogsWithNewPosts.isEmpty())
-                issueNotification(context, names(blogsWithNewPosts));
-
-        } catch (NullPointerException | IOException e) {
-            e.printStackTrace();
-        }
+            @Override
+            protected void onPostExecute(List<String> blogNames) {
+                if (blogNames == null) return;
+                issueNotification(context, blogNames);
+            }
+        }.execute();
     }
 
     public static void issueNotification(Context context, List<String> blogNames) {

@@ -20,7 +20,7 @@ public class AlarmUtils {
                 context, 1, new Intent(context, Receiver.class), PendingIntent.FLAG_UPDATE_CURRENT);
 
         if (set) alarmManager.setInexactRepeating(AlarmManager.ELAPSED_REALTIME,
-                AlarmManager.INTERVAL_HOUR, AlarmManager.INTERVAL_HOUR, pendingIntent);
+                0, 60000, pendingIntent);
         else alarmManager.cancel(pendingIntent);
 
         ComponentName receiver = new ComponentName(context, Receiver.class);

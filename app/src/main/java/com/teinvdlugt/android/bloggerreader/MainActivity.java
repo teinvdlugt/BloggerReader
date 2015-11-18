@@ -1,6 +1,5 @@
 package com.teinvdlugt.android.bloggerreader;
 
-import android.app.AlarmManager;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -135,12 +134,17 @@ public class MainActivity extends AppCompatActivity
                 Intent intent = new Intent(this, FollowingBlogsActivity.class);
                 startActivity(intent);
                 break;
+            case R.id.settings:
+                Intent settingsIntent = new Intent(this, SettingsActivity.class);
+                startActivity(settingsIntent);
+                break;
             case R.id.notification_test:
                 List<String> blogNames = new ArrayList<>();
                 blogNames.add("Official Google Blog");
                 blogNames.add("Research Blog");
                 blogNames.add("Als docent...");
                 Receiver.issueNotification(this, blogNames);
+                break;
         }
         return false;
     }

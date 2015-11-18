@@ -35,6 +35,10 @@
             android:name=".FollowingBlogsActivity"
             android:label="@string/following_blogs_activity_title" />
 
+        <activity
+            android:name=".SettingsActivity"
+            android:label="@string/settings" />
+
         <receiver
             android:name=".Receiver"
             android:enabled="false">

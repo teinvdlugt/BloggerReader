@@ -31,6 +31,7 @@ public class IOUtils {
 
     public static final String BLOGS_FOLLOWING_FILE_NAME = "blogs_following";
     public static final String LAST_POST_ID_FILE_NAME = "most_recent_posts";
+    public static final String LAST_POST_ID_PREFERENCES = "most_recent_posts";
 
     public static List<Blog> blogsFollowing(Context context) {
         // See overwriteBlogs(Context context, List<Blog> blogs) method for
@@ -110,26 +111,6 @@ public class IOUtils {
             if (blogId.equals(it.next().getId())) it.remove();
         }
         overwriteBlogs(context, saved);
-    }
-
-    public static Map<String, String> getLastPostIds(Context context) {
-        try {
-            FileInputStream fis = context.openFileInput(LAST_POST_ID_FILE_NAME);
-            InputStreamReader isr = new InputStreamReader(fis);
-            BufferedReader buff = new BufferedReader(isr);
-
-            Map<String, String> result = new HashMap<>();
-
-            String line;
-            while ((line = buff.readLine()) != null) {
-                String[] data = line.split(":");
-                result.put(data[0], data[1]);
-            }
-            return result;
-        } catch (IOException e) {
-            e.printStackTrace();
-            return new HashMap<>();
-        }
     }
 
 

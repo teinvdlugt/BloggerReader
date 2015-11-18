@@ -10,6 +10,9 @@
                 <item
                     android:id="@+id/follow_blog"
                     android:title="@string/follow_blog" />
+                <item
+                    android:id="@+id/settings"
+                    android:title="@string/settings" />
             </menu>
         </item>
         <item
