@@ -66,13 +66,18 @@ public class BlogActivity extends AppCompatActivity implements PostAdapter.OnPos
 
                 try {
                     blog = blogger.blogs().get(blogId)
-                            .setMaxPosts(100L)
+                            .setMaxPosts(50L)
                             .setKey(IOUtils.API_KEY).execute();
                     publishProgress(ProgressUpdateType.BLOG);
 
                     followingBlog = IOUtils.blogFollowed(BlogActivity.this, blog.getId());
                     publishProgress(ProgressUpdateType.FOLLOWING_BLOG);
-                } catch (IOException e) {
+
+                    getSharedPreferences(IOUtils.LAST_POST_ID_PREFERENCES, MODE_PRIVATE)
+                            .edit()
+                            .putString(blog.getId(), blog.getPosts().getItems().get(0).getId())
+                            .apply();
+                } catch (IOException | NullPointerException | IndexOutOfBoundsException e) {
                     e.printStackTrace();
                 }
                 return null;

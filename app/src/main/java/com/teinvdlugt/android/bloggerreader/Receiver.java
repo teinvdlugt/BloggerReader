@@ -46,26 +46,37 @@ public class Receiver extends BroadcastReceiver {
             protected List<String> doInBackground(Void... params) {
                 try {
                     List<Blog> blogsWithNewPosts = new ArrayList<>();
-
                     List<Blog> following = IOUtils.blogsFollowing(context);
+
                     SharedPreferences pref = context.getSharedPreferences(IOUtils.LAST_POST_ID_PREFERENCES, Context.MODE_PRIVATE);
+                    SharedPreferences.Editor prefEditor = pref.edit();
 
                     Blogger blogger = IOUtils.createBloggerInstance();
                     for (Blog blog : following) {
-                        String newPostId = blogger.blogs().get(blog.getId()).setMaxPosts(1L)
-                                .setKey(IOUtils.API_KEY).execute().getPosts().getItems().get(0).getId();
-                        String oldPostId = pref.getString(blog.getId(), null);
+                        try {
+                            String newPostId = blogger.blogs().get(blog.getId()).setMaxPosts(1L)
+                                    .setKey(IOUtils.API_KEY).execute().getPosts().getItems().get(0).getId();
+                            String oldPostId = pref.getString(blog.getId(), null);
 
-                        if (newPostId != null && oldPostId != null && !newPostId.equals(oldPostId)) {
-                            // New post available!
-                            blogsWithNewPosts.add(blog);
+                            if (newPostId != null && oldPostId != null && !newPostId.equals(oldPostId)) {
+                                // New post available!
+                                blogsWithNewPosts.add(blog);
+
+                                // Update most_recent_posts sharedPreferences
+                                prefEditor.putString(blog.getId(), newPostId);
+                            }
+                        } catch (NullPointerException | IOException | IndexOutOfBoundsException e) {
+                            e.printStackTrace();
                         }
+
                     }
+
+                    prefEditor.apply();
 
                     if (!blogsWithNewPosts.isEmpty())
                         return names(blogsWithNewPosts);
                     return null;
-                } catch (NullPointerException | IOException e) {
+                } catch (NullPointerException e) {
                     e.printStackTrace();
                     return null;
                 }

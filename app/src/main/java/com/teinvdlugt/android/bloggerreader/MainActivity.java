@@ -4,6 +4,7 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
@@ -73,14 +74,19 @@ public class MainActivity extends AppCompatActivity
                 try {
                     if (IOUtils.checkNotConnected(MainActivity.this)) return new ArrayList<>();
 
+                    SharedPreferences.Editor lastPostIds = getSharedPreferences(IOUtils.LAST_POST_ID_PREFERENCES, MODE_PRIVATE).edit();
                     blogs = IOUtils.blogsFollowing(MainActivity.this);
                     List<Post> list = new ArrayList<>();
                     for (Blog blog : blogs) {
                         try {
-                            list.addAll(blogger.blogs().get(blog.getId()).setMaxPosts(50L).setKey(IOUtils.API_KEY)
-                                    .execute().getPosts().getItems());
+                            List<Post> posts = blogger.blogs().get(blog.getId()).setMaxPosts(10L).setKey(IOUtils.API_KEY)
+                                    .execute().getPosts().getItems();
+                            list.addAll(posts);
+                            lastPostIds.putString(blog.getId(), posts.get(0).getId());
                         } catch (NullPointerException e) { /*ignored*/ }
                     }
+
+                    lastPostIds.apply();
 
                     sortDates(list);
                     return list;
