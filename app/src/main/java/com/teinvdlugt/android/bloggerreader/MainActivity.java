@@ -3,6 +3,7 @@ package com.teinvdlugt.android.bloggerreader;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -11,16 +12,17 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.PersistableBundle;
 import android.preference.PreferenceManager;
 import android.support.design.widget.NavigationView;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.text.Html;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -35,6 +37,7 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener,
         PostAdapter.OnPostClickListener {
+    private static final String BLOG_VISIBLE_PREFERENCE = "blog_visible_";
 
     private SwipeRefreshLayout srLayout;
     private ActionBarDrawerToggle toggle;
@@ -42,7 +45,6 @@ public class MainActivity extends AppCompatActivity
 
     private PostAdapter adapter;
     private Blogger blogger;
-    private List<Blog> blogs;
 
     @SuppressWarnings("ConstantConditions")
     @Override
@@ -97,16 +99,19 @@ public class MainActivity extends AppCompatActivity
                 try {
                     if (IOUtils.checkNotConnected(MainActivity.this)) return new ArrayList<>();
 
+                    SharedPreferences visibleBlogsPref = getPreferences(MODE_PRIVATE);
                     SharedPreferences.Editor lastPostIds = getSharedPreferences(IOUtils.LAST_POST_ID_PREFERENCES, MODE_PRIVATE).edit();
-                    blogs = IOUtils.blogsFollowing(MainActivity.this);
+                    List<Blog> blogs = IOUtils.blogsFollowing(MainActivity.this);
                     List<Post> list = new ArrayList<>();
                     for (Blog blog : blogs) {
-                        try {
-                            List<Post> posts = blogger.blogs().get(blog.getId()).setMaxPosts(10L).setKey(IOUtils.API_KEY)
-                                    .execute().getPosts().getItems();
-                            list.addAll(posts);
-                            lastPostIds.putString(blog.getId(), posts.get(0).getId());
-                        } catch (NullPointerException e) { /*ignored*/ }
+                        if (visibleBlogsPref.getBoolean(BLOG_VISIBLE_PREFERENCE + blog.getId(), true)) {
+                            try {
+                                List<Post> posts = blogger.blogs().get(blog.getId()).setMaxPosts(10L).setKey(IOUtils.API_KEY)
+                                        .execute().getPosts().getItems();
+                                list.addAll(posts);
+                                lastPostIds.putString(blog.getId(), posts.get(0).getId());
+                            } catch (NullPointerException e) { /*ignored*/ }
+                        }
                     }
 
                     lastPostIds.apply();
@@ -187,11 +192,47 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == R.id.refresh) {
-            refresh();
-            return true;
+        switch (item.getItemId()) {
+            case R.id.refresh:
+                refresh();
+                return true;
+            case R.id.blog_visibility:
+                showBlogVisibilityDialog();
         }
         return false;
+    }
+
+    private void showBlogVisibilityDialog() {
+        final List<Blog> blogs = IOUtils.blogsFollowing(this);
+        CharSequence[] names = new CharSequence[blogs.size()];
+        for (int i = 0; i < names.length; i++) {
+            names[i] = Html.fromHtml(blogs.get(i).getName());
+        }
+
+        boolean[] visible = new boolean[blogs.size()];
+        SharedPreferences pref = getPreferences(MODE_PRIVATE); // Local to activity
+        for (int i = 0; i < visible.length; i++) {
+            visible[i] = pref.getBoolean(BLOG_VISIBLE_PREFERENCE + blogs.get(i).getId(), true);
+        }
+
+        final SharedPreferences.Editor editor = pref.edit();
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.visible_blogs)
+                .setMultiChoiceItems(names, visible, new DialogInterface.OnMultiChoiceClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which, boolean isChecked) {
+                        editor.putBoolean(BLOG_VISIBLE_PREFERENCE + blogs.get(which).getId(), isChecked);
+                    }
+                })
+                .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        editor.apply();
+                        refresh();
+                    }
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .create().show();
     }
 
     public static boolean openURLInBrowser(Context context, String url) {

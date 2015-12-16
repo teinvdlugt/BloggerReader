@@ -28,4 +28,6 @@
     <string name="notification_title">Blogger</string>
     <string name="notification_message">"New posts by "</string>
     <string name="refresh">Refresh</string>
+    <string name="visible_blogs">Visible blogs</string>
+    <string name="ok">OK</string>
 </resources>

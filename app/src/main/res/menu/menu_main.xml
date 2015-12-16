@@ -6,4 +6,10 @@
         android:orderInCategory="100"
         android:title="@string/refresh"
         app:showAsAction="never" />
+    <item
+        android:id="@+id/blog_visibility"
+        android:icon="@mipmap/ic_settings_white_24dp"
+        android:orderInCategory="102"
+        android:title="@string/visible_blogs"
+        app:showAsAction="ifRoom" />
 </menu>
