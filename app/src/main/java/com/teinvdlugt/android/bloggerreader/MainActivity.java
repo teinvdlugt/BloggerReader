@@ -19,6 +19,7 @@ import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -32,19 +33,25 @@ import com.google.api.services.blogger.model.Post;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener,
         PostAdapter.OnPostClickListener {
     private static final String BLOG_VISIBLE_PREFERENCE = "blog_visible_";
 
+    private RecyclerView recyclerView;
     private SwipeRefreshLayout srLayout;
     private ActionBarDrawerToggle toggle;
     private NavigationView navigationView;
 
     private PostAdapter adapter;
     private Blogger blogger;
+    private Map<String, Boolean> blogMap = new HashMap<>();
 
     @SuppressWarnings("ConstantConditions")
     @Override
@@ -72,18 +79,19 @@ public class MainActivity extends AppCompatActivity
         srLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                refresh();
+                refresh(true);
             }
         });
 
-        RecyclerView recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
+        recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
         adapter = new PostAdapter(this, this);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(adapter);
-        refresh();
+        recyclerView.setItemAnimator(new DefaultItemAnimator());
+        refresh(true);
     }
 
-    private void refresh() {
+    private void refresh(final boolean totalRefresh) {
         if (!srLayout.isRefreshing()) {
             srLayout.post(new Runnable() {
                 @Override
@@ -93,38 +101,113 @@ public class MainActivity extends AppCompatActivity
             });
         }
 
-        new AsyncTask<Void, Void, List<Post>>() {
-            @Override
-            protected List<Post> doInBackground(Void... params) {
-                try {
-                    if (IOUtils.checkNotConnected(MainActivity.this)) return new ArrayList<>();
+        List data = adapter.getData();
+        if (totalRefresh && data != null && data.size() > 0) {
+            data.clear();
+            adapter.notifyDataSetChanged();
+        }
 
-                    SharedPreferences visibleBlogsPref = getPreferences(MODE_PRIVATE);
-                    SharedPreferences.Editor lastPostIds = getSharedPreferences(IOUtils.LAST_POST_ID_PREFERENCES, MODE_PRIVATE).edit();
+        new AsyncTask<Void, Post, Void>() {
+            @Override
+            protected Void doInBackground(Void... params) {
+                if (totalRefresh) {
                     List<Blog> blogs = IOUtils.blogsFollowing(MainActivity.this);
-                    List<Post> list = new ArrayList<>();
+                    SharedPreferences visibleBlogsPref = getPreferences(MODE_PRIVATE);
+                    for (Iterator<Blog> it = blogs.iterator(); it.hasNext(); ) {
+                        if (!visibleBlogsPref.getBoolean(BLOG_VISIBLE_PREFERENCE + it.next().getId(), true)) {
+                            it.remove();
+                        }
+                    }
+                    blogMap.clear();
                     for (Blog blog : blogs) {
-                        if (visibleBlogsPref.getBoolean(BLOG_VISIBLE_PREFERENCE + blog.getId(), true)) {
-                            try {
-                                List<Post> posts = blogger.blogs().get(blog.getId()).setMaxPosts(10L).setKey(IOUtils.API_KEY)
-                                        .execute().getPosts().getItems();
-                                list.addAll(posts);
-                                lastPostIds.putString(blog.getId(), posts.get(0).getId());
-                            } catch (NullPointerException e) { /*ignored*/ }
+                        blogMap.put(blog.getId(), false);
+                    }
+                }
+
+                try {
+                    if (IOUtils.checkNotConnected(MainActivity.this)) return null;
+
+                    SharedPreferences.Editor lastPostIds = getSharedPreferences(IOUtils.LAST_POST_ID_PREFERENCES, MODE_PRIVATE).edit();
+
+                    for (String blogId : blogMap.keySet()) {
+                        if (!blogMap.get(blogId)) {
+                            List<Post> posts = blogger.blogs().get(blogId).setMaxPosts(10L).setKey(IOUtils.API_KEY)
+                                    .execute().getPosts().getItems();
+                            if (posts.size() > 0)
+                                lastPostIds.putString(blogId, posts.get(0).getId());
+
+                            // Convert to native array
+                            Post[] postArray = new Post[posts.size()];
+                            for (int i = 0; i < postArray.length; i++) {
+                                postArray[i] = posts.get(i);
+                            }
+                            publishProgress(postArray);
+
+                            blogMap.put(blogId, true);
                         }
                     }
 
                     lastPostIds.apply();
 
-                    sortDates(list);
-                    return list;
+                    /*List<Blog> blogs = IOUtils.blogsFollowing(MainActivity.this);
+                    List<Post> list = new ArrayList<>();
+                    for (Blog blog : blogs) {
+                        try {
+                            List<Post> posts = blogger.blogs().get(blog.getId()).setMaxPosts(10L).setKey(IOUtils.API_KEY)
+                                    .execute().getPosts().getItems();
+                            list.addAll(posts);
+                            lastPostIds.putString(blog.getId(), posts.get(0).getId());
+                        } catch (NullPointerException e) { *//*ignored*//* }
+                    }*/
+
+                    return null;
 
                     // Official Google Blog: 10861780
                     // Mike Louwman: 5563501798919888465
                 } catch (IOException e) {
                     e.printStackTrace();
-                    return new ArrayList<>();
+                    return null;
                 }
+            }
+
+            @Override
+            protected void onProgressUpdate(Post... posts) {
+                List<Post> data = adapter.getData();
+                List<Integer> positions = new ArrayList<>();
+
+                if (data == null || data.isEmpty()) {
+                    data = new ArrayList<>();
+                    Collections.addAll(data, posts);
+                    adapter.setData(data);
+                    adapter.notifyItemRangeInserted(0, data.size());
+                    return;
+                }
+
+                int d = 0; // adapter data index
+                for (int p = 0; p < posts.length; p++) {
+                    for (; d < data.size(); d++) {
+                        if (data.get(d).getPublished().getValue() < posts[p].getPublished().getValue()) {
+                            data.add(d, posts[p]);
+                            positions.add(d);
+                            break;
+                        }
+                    }
+
+                    if (d == data.size()) {
+                        // Add all remaining posts to end of adapter data
+                        for (; p < posts.length; p++) {
+                            data.add(posts[p]);
+                            positions.add(data.size() - 1);
+                        }
+                        break;
+                    }
+                }
+
+                for (int i : positions) {
+                    adapter.notifyItemInserted(i);
+                }
+
+                recyclerView.smoothScrollToPosition(0);
             }
 
             private void sortDates(List<Post> list) {
@@ -140,9 +223,9 @@ public class MainActivity extends AppCompatActivity
             }
 
             @Override
-            protected void onPostExecute(List<Post> posts) {
-                adapter.setData(posts);
-                adapter.notifyDataSetChanged();
+            protected void onPostExecute(Void aVoid) {
+                // adapter.setData(posts);
+                // adapter.notifyDataSetChanged();
                 srLayout.setRefreshing(false);
             }
         }.execute();
@@ -194,7 +277,7 @@ public class MainActivity extends AppCompatActivity
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.refresh:
-                refresh();
+                refresh(true);
                 return true;
             case R.id.blog_visibility:
                 showBlogVisibilityDialog();
@@ -215,23 +298,33 @@ public class MainActivity extends AppCompatActivity
             visible[i] = pref.getBoolean(BLOG_VISIBLE_PREFERENCE + blogs.get(i).getId(), true);
         }
 
+        final HashMap<String, Boolean> blogMapBackup = new HashMap<>(blogMap);
+
         final SharedPreferences.Editor editor = pref.edit();
         new AlertDialog.Builder(this)
                 .setTitle(R.string.visible_blogs)
                 .setMultiChoiceItems(names, visible, new DialogInterface.OnMultiChoiceClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which, boolean isChecked) {
-                        editor.putBoolean(BLOG_VISIBLE_PREFERENCE + blogs.get(which).getId(), isChecked);
+                        String id = blogs.get(which).getId();
+                        editor.putBoolean(BLOG_VISIBLE_PREFERENCE + id, isChecked);
+                        if (isChecked) blogMap.put(id, false);
+                        else blogMap.remove(id);
                     }
                 })
                 .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         editor.apply();
-                        refresh();
+                        refresh(false);
                     }
                 })
-                .setNegativeButton(R.string.cancel, null)
+                .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        blogMap = blogMapBackup;
+                    }
+                })
                 .create().show();
     }
 
