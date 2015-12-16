@@ -9,14 +9,14 @@
             <menu>
                 <item
                     android:id="@+id/follow_blog"
-                    android:title="@string/follow_blog" />
+                    android:title="@string/following_blogs" />
                 <item
                     android:id="@+id/settings"
                     android:title="@string/settings" />
             </menu>
         </item>
-        <item
+        <!--<item
             android:id="@+id/notification_test"
-            android:title="Issue test notification" />
+            android:title="Issue test notification" />-->
     </group>
 </menu>

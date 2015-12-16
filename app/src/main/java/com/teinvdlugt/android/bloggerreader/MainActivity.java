@@ -144,13 +144,13 @@ public class MainActivity extends AppCompatActivity
                 Intent settingsIntent = new Intent(this, SettingsActivity.class);
                 startActivity(settingsIntent);
                 break;
-            case R.id.notification_test:
+            /*case R.id.notification_test:
                 List<String> blogNames = new ArrayList<>();
                 blogNames.add("Official Google Blog");
                 blogNames.add("Research Blog");
                 blogNames.add("Als docent...");
                 Receiver.issueNotification(this, blogNames);
-                break;
+                break;*/
         }
         return false;
     }
