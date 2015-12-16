@@ -11,14 +11,17 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.PersistableBundle;
 import android.preference.PreferenceManager;
 import android.support.design.widget.NavigationView;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.view.Menu;
 import android.view.MenuItem;
 
 import com.google.api.services.blogger.Blogger;
@@ -32,6 +35,8 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener,
         PostAdapter.OnPostClickListener {
+
+    private SwipeRefreshLayout srLayout;
     private ActionBarDrawerToggle toggle;
     private NavigationView navigationView;
 
@@ -51,6 +56,7 @@ public class MainActivity extends AppCompatActivity
         // Find views
         DrawerLayout drawerLayout = (DrawerLayout) findViewById(R.id.drawerLayout);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        srLayout = (SwipeRefreshLayout) findViewById(R.id.swipeRefreshLayout);
         navigationView = (NavigationView) findViewById(R.id.navigationView);
 
         // Drawer layout and stuff
@@ -60,6 +66,14 @@ public class MainActivity extends AppCompatActivity
         toggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar,
                 R.string.xs_open_drawer, R.string.xs_close_drawer);
 
+        // Swipe-refresh
+        srLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                refresh();
+            }
+        });
+
         RecyclerView recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
         adapter = new PostAdapter(this, this);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -68,6 +82,15 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void refresh() {
+        if (!srLayout.isRefreshing()) {
+            srLayout.post(new Runnable() {
+                @Override
+                public void run() {
+                    srLayout.setRefreshing(true);
+                }
+            });
+        }
+
         new AsyncTask<Void, Void, List<Post>>() {
             @Override
             protected List<Post> doInBackground(Void... params) {
@@ -115,6 +138,7 @@ public class MainActivity extends AppCompatActivity
             protected void onPostExecute(List<Post> posts) {
                 adapter.setData(posts);
                 adapter.notifyDataSetChanged();
+                srLayout.setRefreshing(false);
             }
         }.execute();
     }
@@ -151,6 +175,21 @@ public class MainActivity extends AppCompatActivity
                 blogNames.add("Als docent...");
                 Receiver.issueNotification(this, blogNames);
                 break;*/
+        }
+        return false;
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.refresh) {
+            refresh();
+            return true;
         }
         return false;
     }
