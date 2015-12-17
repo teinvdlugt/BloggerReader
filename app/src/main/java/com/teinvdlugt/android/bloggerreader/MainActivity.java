@@ -210,7 +210,7 @@ public class MainActivity extends AppCompatActivity
                 recyclerView.smoothScrollToPosition(0);
             }
 
-            private void sortDates(List<Post> list) {
+            /*private void sortDates(List<Post> list) {
                 for (int i = list.size() - 1; i > 1; i--) {
                     for (int j = 0; j < i; j++) {
                         if (list.get(j).getPublished().getValue() < list.get(j + 1).getPublished().getValue()) {
@@ -220,7 +220,7 @@ public class MainActivity extends AppCompatActivity
                         }
                     }
                 }
-            }
+            }*/
 
             @Override
             protected void onPostExecute(Void aVoid) {
@@ -299,6 +299,7 @@ public class MainActivity extends AppCompatActivity
         }
 
         final HashMap<String, Boolean> blogMapBackup = new HashMap<>(blogMap);
+        final List<String> removeBlogs = new ArrayList<>();
 
         final SharedPreferences.Editor editor = pref.edit();
         new AlertDialog.Builder(this)
@@ -308,14 +309,20 @@ public class MainActivity extends AppCompatActivity
                     public void onClick(DialogInterface dialog, int which, boolean isChecked) {
                         String id = blogs.get(which).getId();
                         editor.putBoolean(BLOG_VISIBLE_PREFERENCE + id, isChecked);
-                        if (isChecked) blogMap.put(id, false);
-                        else blogMap.remove(id);
+                        if (isChecked) {
+                            blogMap.put(id, false);
+                            removeBlogs.remove(id);
+                        } else {
+                            blogMap.remove(id);
+                            removeBlogs.add(id);
+                        }
                     }
                 })
                 .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         editor.apply();
+                        removeBlogs(removeBlogs);
                         refresh(false);
                     }
                 })
@@ -326,6 +333,19 @@ public class MainActivity extends AppCompatActivity
                     }
                 })
                 .create().show();
+    }
+
+    private void removeBlogs(List<String> ids) {
+        List<Post> data = adapter.getData();
+        if (data == null || data.size() == 0) return;
+
+        for (int i = 0; i < data.size(); i++) {
+            if (ids.contains(data.get(i).getBlog().getId())) {
+                data.remove(i);
+                adapter.notifyItemRemoved(i);
+                i--;
+            }
+        }
     }
 
     public static boolean openURLInBrowser(Context context, String url) {
