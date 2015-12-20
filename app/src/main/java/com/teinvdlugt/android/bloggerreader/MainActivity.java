@@ -52,6 +52,7 @@ public class MainActivity extends AppCompatActivity
     private PostAdapter adapter;
     private Blogger blogger;
     private Map<String, Boolean> blogMap = new HashMap<>();
+    private CustomTabsHelper tabsHelper;
 
     @SuppressWarnings("ConstantConditions")
     @Override
@@ -60,6 +61,7 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
 
+        tabsHelper = new CustomTabsHelper();
         blogger = IOUtils.createBloggerInstance();
 
         // Find views
@@ -227,6 +229,10 @@ public class MainActivity extends AppCompatActivity
                 // adapter.setData(posts);
                 // adapter.notifyDataSetChanged();
                 srLayout.setRefreshing(false);
+
+                for (int i = 0; i < 8 && i < adapter.getData().size(); i++) {
+                    tabsHelper.mayLaunchUrl(adapter.getData().get(i).getUrl());
+                }
             }
         }.execute();
     }
@@ -239,7 +245,8 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onClickPost(Post post) {
-        PostActivity.openActivity(this, post.getBlog().getId(), post.getId(), post.getUrl());
+        // PostActivity.openActivity(this, post.getBlog().getId(), post.getId(), post.getUrl());
+        tabsHelper.openURL(this, post.getUrl());
     }
 
     @Override
@@ -346,6 +353,18 @@ public class MainActivity extends AppCompatActivity
                 i--;
             }
         }
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        tabsHelper.bindService(this);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        tabsHelper.unbindService(this);
     }
 
     public static boolean openURLInBrowser(Context context, String url) {
