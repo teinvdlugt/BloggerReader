@@ -4,4 +4,10 @@
         android:defaultValue="true"
         android:key="notifications"
         android:title="Notifications" />
+    <SwitchPreference
+        android:defaultValue="true"
+        android:key="use_custom_tabs"
+        android:title="Open posts in browser"
+        android:summaryOff="@string/custom_tabs_pref_summary_off"
+        android:summaryOn="@string/custom_tabs_pref_summary_on"/>
 </PreferenceScreen>

@@ -43,6 +43,8 @@ public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener,
         PostAdapter.OnPostClickListener {
     private static final String BLOG_VISIBLE_PREFERENCE = "blog_visible_";
+    private static final String USE_CUSTOM_TABS_PREFERENCE = "use_custom_tabs";
+    private static final String USE_CUSTOM_TABS_ASKED_PREFERENCE = "use_custom_tabs_asked";
 
     private RecyclerView recyclerView;
     private SwipeRefreshLayout srLayout;
@@ -85,11 +87,14 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
+        // RecyclerView
         recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
         adapter = new PostAdapter(this, this);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(adapter);
         recyclerView.setItemAnimator(new DefaultItemAnimator());
+
+        // Refresh
         refresh(true);
     }
 
@@ -230,8 +235,12 @@ public class MainActivity extends AppCompatActivity
                 // adapter.notifyDataSetChanged();
                 srLayout.setRefreshing(false);
 
-                for (int i = 0; i < 8 && i < adapter.getData().size(); i++) {
-                    tabsHelper.mayLaunchUrl(adapter.getData().get(i).getUrl());
+                // TODO: 20-12-2015 If no posts are displayed, display "Follow blogs" text
+
+                if (adapter.getData() != null) {
+                    for (int i = 0; i < 8 && i < adapter.getData().size(); i++) {
+                        tabsHelper.mayLaunchUrl(adapter.getData().get(i).getUrl());
+                    }
                 }
             }
         }.execute();
@@ -244,9 +253,37 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    public void onClickPost(Post post) {
-        // PostActivity.openActivity(this, post.getBlog().getId(), post.getId(), post.getUrl());
-        tabsHelper.openURL(this, post.getUrl());
+    public void onClickPost(final Post post) {
+        final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
+        if (!pref.getBoolean(USE_CUSTOM_TABS_ASKED_PREFERENCE, false)) {
+            // Ask whether to open post in browser or post viewer
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.use_custom_tabs_ask_dialog_title)
+                    .setMessage(getString(R.string.use_custom_tabs_ask_dialog_message))
+                    .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            pref.edit().putBoolean(USE_CUSTOM_TABS_ASKED_PREFERENCE, true)
+                                    .putBoolean(USE_CUSTOM_TABS_PREFERENCE, true).apply();
+                            tabsHelper.openURL(MainActivity.this, post.getUrl());
+                        }
+                    })
+                    .setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            pref.edit().putBoolean(USE_CUSTOM_TABS_ASKED_PREFERENCE, true)
+                                    .putBoolean(USE_CUSTOM_TABS_PREFERENCE, false).apply();
+                            PostActivity.openActivity(MainActivity.this, post.getBlog().getId(), post.getId(), post.getUrl());
+                        }
+                    })
+                    .create().show();
+        } else {
+            if (pref.getBoolean(USE_CUSTOM_TABS_PREFERENCE, true)) {
+                tabsHelper.openURL(this, post.getUrl());
+            } else {
+                PostActivity.openActivity(this, post.getBlog().getId(), post.getId(), post.getUrl());
+            }
+        }
     }
 
     @Override
