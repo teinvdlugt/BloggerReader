@@ -49,6 +49,10 @@ public class FollowingBlogsActivity extends AppCompatActivity {
         adapter = new FollowingBlogsAdapter();
         recyclerView.setAdapter(adapter);
 
+        refresh();
+    }
+
+    private void refresh() {
         List<Blog> blogs = IOUtils.blogsFollowing(this);
         adapter.setData(blogs);
         adapter.notifyDataSetChanged();
@@ -201,6 +205,12 @@ public class FollowingBlogsActivity extends AppCompatActivity {
                     }
                 }).setNegativeButton(R.string.cancel, null)
                 .create().show();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        refresh();
     }
 
     private class FollowingBlogsAdapter extends RecyclerView.Adapter<FollowingBlogsAdapter.ViewHolder> {
