@@ -323,7 +323,12 @@ public class MainActivity extends CustomTabsActivity
                         String id = blogs.get(which).getId();
                         editor.putBoolean(BLOG_VISIBLE_PREFERENCE + id, isChecked);
                         if (isChecked) {
-                            blogMap.put(id, false);
+                            if (blogMapBackup.get(id) != null) {
+                                blogMap.put(id, blogMapBackup.get(id));
+                            } else {
+                                blogMap.put(id, false);
+                            }
+
                             removeBlogs.remove(id);
                         } else {
                             blogMap.remove(id);
