@@ -153,17 +153,6 @@ public class MainActivity extends CustomTabsActivity
 
                     lastPostIds.apply();
 
-                    /*List<Blog> blogs = IOUtils.blogsFollowing(MainActivity.this);
-                    List<Post> list = new ArrayList<>();
-                    for (Blog blog : blogs) {
-                        try {
-                            List<Post> posts = blogger.blogs().get(blog.getId()).setMaxPosts(10L).setKey(IOUtils.API_KEY)
-                                    .execute().getPosts().getItems();
-                            list.addAll(posts);
-                            lastPostIds.putString(blog.getId(), posts.get(0).getId());
-                        } catch (NullPointerException e) { *//*ignored*//* }
-                    }*/
-
                     return null;
 
                     // Official Google Blog: 10861780
@@ -214,22 +203,8 @@ public class MainActivity extends CustomTabsActivity
                 recyclerView.smoothScrollToPosition(0);
             }
 
-            /*private void sortDates(List<Post> list) {
-                for (int i = list.size() - 1; i > 1; i--) {
-                    for (int j = 0; j < i; j++) {
-                        if (list.get(j).getPublished().getValue() < list.get(j + 1).getPublished().getValue()) {
-                            Post temp = list.get(j);
-                            list.set(j, list.get(j + 1));
-                            list.set(j + 1, temp);
-                        }
-                    }
-                }
-            }*/
-
             @Override
             protected void onPostExecute(Void aVoid) {
-                // adapter.setData(posts);
-                // adapter.notifyDataSetChanged();
                 srLayout.setRefreshing(false);
 
                 // TODO: 20-12-2015 If no posts are displayed, display "Follow blogs" text
@@ -269,13 +244,6 @@ public class MainActivity extends CustomTabsActivity
                 Intent settingsIntent = new Intent(this, SettingsActivity.class);
                 startActivity(settingsIntent);
                 break;
-            /*case R.id.notification_test:
-                List<String> blogNames = new ArrayList<>();
-                blogNames.add("Official Google Blog");
-                blogNames.add("Research Blog");
-                blogNames.add("Als docent...");
-                Receiver.issueNotification(this, blogNames);
-                break;*/
         }
         return false;
     }
