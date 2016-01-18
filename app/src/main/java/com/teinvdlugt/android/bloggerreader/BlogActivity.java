@@ -22,7 +22,7 @@ import com.google.api.services.blogger.model.Post;
 
 import java.io.IOException;
 
-public class BlogActivity extends AppCompatActivity implements PostAdapter.OnPostClickListener,
+public class BlogActivity extends CustomTabsActivity implements PostAdapter.OnPostClickListener,
         PostAdapter.HeaderUpdateListener {
     public static final String BLOG_ID = "blog_id";
 
@@ -128,7 +128,7 @@ public class BlogActivity extends AppCompatActivity implements PostAdapter.OnPos
 
     @Override
     public void onClickPost(Post post) {
-        PostActivity.openActivity(this, post.getBlog().getId(), post.getId(), post.getUrl());
+        PostActivity.openPost(this, post.getBlog().getId(), post.getId(), post.getUrl());
     }
 
     @Override

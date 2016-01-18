@@ -18,7 +18,6 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -39,12 +38,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-public class MainActivity extends AppCompatActivity
+public class MainActivity extends CustomTabsActivity
         implements NavigationView.OnNavigationItemSelectedListener,
         PostAdapter.OnPostClickListener {
-    private static final String BLOG_VISIBLE_PREFERENCE = "blog_visible_";
-    private static final String USE_CUSTOM_TABS_PREFERENCE = "use_custom_tabs";
-    private static final String USE_CUSTOM_TABS_ASKED_PREFERENCE = "use_custom_tabs_asked";
+    public static final String BLOG_VISIBLE_PREFERENCE = "blog_visible_";
+    public static final String USE_CUSTOM_TABS_PREFERENCE = "use_custom_tabs";
+    public static final String USE_CUSTOM_TABS_ASKED_PREFERENCE = "use_custom_tabs_asked";
 
     private RecyclerView recyclerView;
     private SwipeRefreshLayout srLayout;
@@ -54,7 +53,6 @@ public class MainActivity extends AppCompatActivity
     private PostAdapter adapter;
     private Blogger blogger;
     private Map<String, Boolean> blogMap = new HashMap<>();
-    private CustomTabsHelper tabsHelper;
 
     @SuppressWarnings("ConstantConditions")
     @Override
@@ -63,7 +61,6 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
 
-        tabsHelper = new CustomTabsHelper();
         blogger = IOUtils.createBloggerInstance();
 
         // Find views
@@ -237,7 +234,8 @@ public class MainActivity extends AppCompatActivity
 
                 // TODO: 20-12-2015 If no posts are displayed, display "Follow blogs" text
 
-                if (adapter.getData() != null) {
+                if (adapter.getData() != null && PreferenceManager.getDefaultSharedPreferences(MainActivity.this)
+                        .getBoolean(MainActivity.USE_CUSTOM_TABS_PREFERENCE, true)) {
                     for (int i = 0; i < 8 && i < adapter.getData().size(); i++) {
                         tabsHelper.mayLaunchUrl(adapter.getData().get(i).getUrl());
                     }
@@ -254,36 +252,7 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onClickPost(final Post post) {
-        final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
-        if (!pref.getBoolean(USE_CUSTOM_TABS_ASKED_PREFERENCE, false)) {
-            // Ask whether to open post in browser or post viewer
-            new AlertDialog.Builder(this)
-                    .setTitle(R.string.use_custom_tabs_ask_dialog_title)
-                    .setMessage(getString(R.string.use_custom_tabs_ask_dialog_message))
-                    .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            pref.edit().putBoolean(USE_CUSTOM_TABS_ASKED_PREFERENCE, true)
-                                    .putBoolean(USE_CUSTOM_TABS_PREFERENCE, true).apply();
-                            tabsHelper.openURL(MainActivity.this, post.getUrl());
-                        }
-                    })
-                    .setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            pref.edit().putBoolean(USE_CUSTOM_TABS_ASKED_PREFERENCE, true)
-                                    .putBoolean(USE_CUSTOM_TABS_PREFERENCE, false).apply();
-                            PostActivity.openActivity(MainActivity.this, post.getBlog().getId(), post.getId(), post.getUrl());
-                        }
-                    })
-                    .create().show();
-        } else {
-            if (pref.getBoolean(USE_CUSTOM_TABS_PREFERENCE, true)) {
-                tabsHelper.openURL(this, post.getUrl());
-            } else {
-                PostActivity.openActivity(this, post.getBlog().getId(), post.getId(), post.getUrl());
-            }
-        }
+        PostActivity.openPost(this, post.getBlog().getId(), post.getId(), post.getUrl());
     }
 
     @Override
@@ -390,18 +359,6 @@ public class MainActivity extends AppCompatActivity
                 i--;
             }
         }
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        tabsHelper.bindService(this);
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        tabsHelper.unbindService(this);
     }
 
     public static boolean openURLInBrowser(Context context, String url) {

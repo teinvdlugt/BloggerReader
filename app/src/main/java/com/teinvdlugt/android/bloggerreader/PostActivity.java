@@ -1,10 +1,14 @@
 package com.teinvdlugt.android.bloggerreader;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.Html;
@@ -276,6 +280,39 @@ public class PostActivity extends AppCompatActivity {
                 return true;
         }
         return false;
+    }
+
+    public static void openPost(final CustomTabsActivity activity, final String blogId, final String postId, final String url) {
+        final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(activity);
+        if (!pref.getBoolean(MainActivity.USE_CUSTOM_TABS_ASKED_PREFERENCE, false)) { // TODO move preference vars to SettingsActivity or Constants.class
+            // Ask whether to open post in browser or post viewer
+            new AlertDialog.Builder(activity)
+                    .setTitle(R.string.use_custom_tabs_ask_dialog_title)
+                    .setMessage(R.string.use_custom_tabs_ask_dialog_message)
+                    .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            pref.edit().putBoolean(MainActivity.USE_CUSTOM_TABS_ASKED_PREFERENCE, true)
+                                    .putBoolean(MainActivity.USE_CUSTOM_TABS_PREFERENCE, true).apply();
+                            activity.tabsHelper.openURL(activity, url);
+                        }
+                    })
+                    .setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            pref.edit().putBoolean(MainActivity.USE_CUSTOM_TABS_ASKED_PREFERENCE, true)
+                                    .putBoolean(MainActivity.USE_CUSTOM_TABS_PREFERENCE, false).apply();
+                            PostActivity.openActivity(activity, blogId, postId, url);
+                        }
+                    })
+                    .create().show();
+        } else {
+            if (pref.getBoolean(MainActivity.USE_CUSTOM_TABS_PREFERENCE, true)) {
+                activity.tabsHelper.openURL(activity, url);
+            } else {
+                PostActivity.openActivity(activity, blogId, postId, url);
+            }
+        }
     }
 
     public static void openActivity(Context context, String blogId, String postId, String url) {
