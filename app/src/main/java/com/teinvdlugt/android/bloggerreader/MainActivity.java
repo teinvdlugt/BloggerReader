@@ -41,9 +41,6 @@ import java.util.Map;
 public class MainActivity extends CustomTabsActivity
         implements NavigationView.OnNavigationItemSelectedListener,
         PostAdapter.OnPostClickListener {
-    public static final String BLOG_VISIBLE_PREFERENCE = "blog_visible_";
-    public static final String USE_CUSTOM_TABS_PREFERENCE = "use_custom_tabs";
-    public static final String USE_CUSTOM_TABS_ASKED_PREFERENCE = "use_custom_tabs_asked";
 
     private RecyclerView recyclerView;
     private SwipeRefreshLayout srLayout;
@@ -118,7 +115,7 @@ public class MainActivity extends CustomTabsActivity
                     List<Blog> blogs = IOUtils.blogsFollowing(MainActivity.this);
                     SharedPreferences visibleBlogsPref = getPreferences(MODE_PRIVATE);
                     for (Iterator<Blog> it = blogs.iterator(); it.hasNext(); ) {
-                        if (!visibleBlogsPref.getBoolean(BLOG_VISIBLE_PREFERENCE + it.next().getId(), true)) {
+                        if (!visibleBlogsPref.getBoolean(Constants.BLOG_VISIBLE_PREFERENCE + it.next().getId(), true)) {
                             it.remove();
                         }
                     }
@@ -131,11 +128,11 @@ public class MainActivity extends CustomTabsActivity
                 try {
                     if (IOUtils.checkNotConnected(MainActivity.this)) return null;
 
-                    SharedPreferences.Editor lastPostIds = getSharedPreferences(IOUtils.LAST_POST_ID_PREFERENCES, MODE_PRIVATE).edit();
+                    SharedPreferences.Editor lastPostIds = getSharedPreferences(Constants.LAST_POST_ID_PREFERENCES, MODE_PRIVATE).edit();
 
                     for (String blogId : blogMap.keySet()) {
                         if (!blogMap.get(blogId)) {
-                            List<Post> posts = blogger.blogs().get(blogId).setMaxPosts(10L).setKey(IOUtils.API_KEY)
+                            List<Post> posts = blogger.blogs().get(blogId).setMaxPosts(10L).setKey(Constants.API_KEY)
                                     .execute().getPosts().getItems();
                             if (posts.size() > 0)
                                 lastPostIds.putString(blogId, posts.get(0).getId());
@@ -210,7 +207,7 @@ public class MainActivity extends CustomTabsActivity
                 // TODO: 20-12-2015 If no posts are displayed, display "Follow blogs" text
 
                 if (adapter.getData() != null && PreferenceManager.getDefaultSharedPreferences(MainActivity.this)
-                        .getBoolean(MainActivity.USE_CUSTOM_TABS_PREFERENCE, true)) {
+                        .getBoolean(Constants.USE_CUSTOM_TABS_PREFERENCE, true)) {
                     for (int i = 0; i < 8 && i < adapter.getData().size(); i++) {
                         tabsHelper.mayLaunchUrl(adapter.getData().get(i).getUrl());
                     }
@@ -276,7 +273,7 @@ public class MainActivity extends CustomTabsActivity
         boolean[] visible = new boolean[blogs.size()];
         SharedPreferences pref = getPreferences(MODE_PRIVATE); // Local to activity
         for (int i = 0; i < visible.length; i++) {
-            visible[i] = pref.getBoolean(BLOG_VISIBLE_PREFERENCE + blogs.get(i).getId(), true);
+            visible[i] = pref.getBoolean(Constants.BLOG_VISIBLE_PREFERENCE + blogs.get(i).getId(), true);
         }
 
         final HashMap<String, Boolean> blogMapBackup = new HashMap<>(blogMap);
@@ -289,7 +286,7 @@ public class MainActivity extends CustomTabsActivity
                     @Override
                     public void onClick(DialogInterface dialog, int which, boolean isChecked) {
                         String id = blogs.get(which).getId();
-                        editor.putBoolean(BLOG_VISIBLE_PREFERENCE + id, isChecked);
+                        editor.putBoolean(Constants.BLOG_VISIBLE_PREFERENCE + id, isChecked);
                         if (isChecked) {
                             if (blogMapBackup.get(id) != null) {
                                 blogMap.put(id, blogMapBackup.get(id));

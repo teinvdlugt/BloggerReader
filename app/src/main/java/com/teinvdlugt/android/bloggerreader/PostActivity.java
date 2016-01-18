@@ -40,9 +40,9 @@ import java.util.Date;
 import java.util.List;
 
 public class PostActivity extends AppCompatActivity {
-    public static final String BLOG_ID = "BLOD_ID";
-    public static final String POST_ID = "POST_ID";
-    public static final String POST_URL = "POST_URL";
+    public static final String BLOG_ID_EXTRA = "BLOG_ID";
+    public static final String POST_ID_EXTRA = "POST_ID";
+    public static final String POST_URL_EXTRA = "POST_URL";
 
     private String blogId, postId, postUrl;
 
@@ -56,6 +56,7 @@ public class PostActivity extends AppCompatActivity {
 
     private AsyncTask<String, ProgressUpdateType, Void> task;
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -64,9 +65,9 @@ public class PostActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        blogId = getIntent().getStringExtra(BLOG_ID);
-        postId = getIntent().getStringExtra(POST_ID);
-        postUrl = getIntent().getStringExtra(POST_URL);
+        blogId = getIntent().getStringExtra(BLOG_ID_EXTRA);
+        postId = getIntent().getStringExtra(POST_ID_EXTRA);
+        postUrl = getIntent().getStringExtra(POST_URL_EXTRA);
         dateFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
         blogger = new Blogger.Builder(
                 AndroidHttp.newCompatibleTransport(), AndroidJsonFactory.getDefaultInstance(), null).build();
@@ -88,7 +89,7 @@ public class PostActivity extends AppCompatActivity {
             @Override
             protected Void doInBackground(String... params) {
                 try {
-                    post = blogger.posts().get(params[0], params[1]).setKey(IOUtils.API_KEY).execute();
+                    post = blogger.posts().get(params[0], params[1]).setKey(Constants.API_KEY).execute();
                     publishProgress(ProgressUpdateType.TITLE_PUBLISHED);
 
                     if (isCancelled()) return null;
@@ -111,7 +112,7 @@ public class PostActivity extends AppCompatActivity {
                     if (isCancelled()) return null;
                     // Retrieve blog name and link
                     String blogId = post.getBlog().getId();
-                    blog = blogger.blogs().get(blogId).setKey(IOUtils.API_KEY).execute();
+                    blog = blogger.blogs().get(blogId).setKey(Constants.API_KEY).execute();
                     if (blog != null) publishProgress(ProgressUpdateType.BLOG_NAME);
 
                     return null;
@@ -284,7 +285,7 @@ public class PostActivity extends AppCompatActivity {
 
     public static void openPost(final CustomTabsActivity activity, final String blogId, final String postId, final String url) {
         final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(activity);
-        if (!pref.getBoolean(MainActivity.USE_CUSTOM_TABS_ASKED_PREFERENCE, false)) { // TODO move preference vars to SettingsActivity or Constants.class
+        if (!pref.getBoolean(Constants.USE_CUSTOM_TABS_ASKED_PREFERENCE, false)) { // TODO move preference vars to SettingsActivity or Constants.class
             // Ask whether to open post in browser or post viewer
             new AlertDialog.Builder(activity)
                     .setTitle(R.string.use_custom_tabs_ask_dialog_title)
@@ -292,22 +293,22 @@ public class PostActivity extends AppCompatActivity {
                     .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-                            pref.edit().putBoolean(MainActivity.USE_CUSTOM_TABS_ASKED_PREFERENCE, true)
-                                    .putBoolean(MainActivity.USE_CUSTOM_TABS_PREFERENCE, true).apply();
+                            pref.edit().putBoolean(Constants.USE_CUSTOM_TABS_ASKED_PREFERENCE, true)
+                                    .putBoolean(Constants.USE_CUSTOM_TABS_PREFERENCE, true).apply();
                             activity.tabsHelper.openURL(activity, url);
                         }
                     })
                     .setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-                            pref.edit().putBoolean(MainActivity.USE_CUSTOM_TABS_ASKED_PREFERENCE, true)
-                                    .putBoolean(MainActivity.USE_CUSTOM_TABS_PREFERENCE, false).apply();
+                            pref.edit().putBoolean(Constants.USE_CUSTOM_TABS_ASKED_PREFERENCE, true)
+                                    .putBoolean(Constants.USE_CUSTOM_TABS_PREFERENCE, false).apply();
                             PostActivity.openActivity(activity, blogId, postId, url);
                         }
                     })
                     .create().show();
         } else {
-            if (pref.getBoolean(MainActivity.USE_CUSTOM_TABS_PREFERENCE, true)) {
+            if (pref.getBoolean(Constants.USE_CUSTOM_TABS_PREFERENCE, true)) {
                 activity.tabsHelper.openURL(activity, url);
             } else {
                 PostActivity.openActivity(activity, blogId, postId, url);
@@ -317,9 +318,9 @@ public class PostActivity extends AppCompatActivity {
 
     public static void openActivity(Context context, String blogId, String postId, String url) {
         Intent intent = new Intent(context, PostActivity.class);
-        intent.putExtra(POST_ID, postId);
-        intent.putExtra(BLOG_ID, blogId);
-        intent.putExtra(POST_URL, url);
+        intent.putExtra(POST_ID_EXTRA, postId);
+        intent.putExtra(BLOG_ID_EXTRA, blogId);
+        intent.putExtra(POST_URL_EXTRA, url);
         context.startActivity(intent);
     }
 

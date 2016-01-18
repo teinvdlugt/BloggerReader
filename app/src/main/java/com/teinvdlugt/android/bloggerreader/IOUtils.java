@@ -18,26 +18,19 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 public class IOUtils {
-    public static final String API_KEY = "AIzaSyAsG_pjWPPXYWq68igzilu77ss0qRP5yM8";
 
     private IOUtils() {
     }
-
-    public static final String BLOGS_FOLLOWING_FILE_NAME = "blogs_following";
-    public static final String LAST_POST_ID_FILE_NAME = "most_recent_posts";
-    public static final String LAST_POST_ID_PREFERENCES = "most_recent_posts";
 
     public static List<Blog> blogsFollowing(Context context) {
         // See overwriteBlogs(Context context, List<Blog> blogs) method for
         // info about file structure
         try {
-            FileInputStream fis = context.openFileInput(BLOGS_FOLLOWING_FILE_NAME);
+            FileInputStream fis = context.openFileInput(Constants.BLOGS_FOLLOWING_FILE_NAME);
             InputStreamReader isr = new InputStreamReader(fis, "UTF-8");
             BufferedReader buff = new BufferedReader(isr);
 
@@ -73,7 +66,7 @@ public class IOUtils {
         // blog2Id,blog2Name,blog2Url\n
         // etc. etc.
         try {
-            FileOutputStream fos = context.openFileOutput(BLOGS_FOLLOWING_FILE_NAME, Context.MODE_PRIVATE);
+            FileOutputStream fos = context.openFileOutput(Constants.BLOGS_FOLLOWING_FILE_NAME, Context.MODE_PRIVATE);
 
             StringBuilder sb = new StringBuilder();
             for (Blog blog : blogs) {

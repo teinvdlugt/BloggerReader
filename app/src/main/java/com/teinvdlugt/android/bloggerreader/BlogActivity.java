@@ -6,7 +6,6 @@ import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -24,7 +23,7 @@ import java.io.IOException;
 
 public class BlogActivity extends CustomTabsActivity implements PostAdapter.OnPostClickListener,
         PostAdapter.HeaderUpdateListener {
-    public static final String BLOG_ID = "blog_id";
+    public static final String BLOG_ID_EXTRA = "blog_id";
 
     private ViewHolder holder;
     private Blog blog;
@@ -38,7 +37,7 @@ public class BlogActivity extends CustomTabsActivity implements PostAdapter.OnPo
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        blogId = getIntent().getStringExtra(BLOG_ID);
+        blogId = getIntent().getStringExtra(BLOG_ID_EXTRA);
         if (blogId == null) return;
 
         setContentView(R.layout.activity_blog);
@@ -67,13 +66,13 @@ public class BlogActivity extends CustomTabsActivity implements PostAdapter.OnPo
                 try {
                     blog = blogger.blogs().get(blogId)
                             .setMaxPosts(50L)
-                            .setKey(IOUtils.API_KEY).execute();
+                            .setKey(Constants.API_KEY).execute();
                     publishProgress(ProgressUpdateType.BLOG);
 
                     followingBlog = IOUtils.blogFollowed(BlogActivity.this, blog.getId());
                     publishProgress(ProgressUpdateType.FOLLOWING_BLOG);
 
-                    getSharedPreferences(IOUtils.LAST_POST_ID_PREFERENCES, MODE_PRIVATE)
+                    getSharedPreferences(Constants.LAST_POST_ID_PREFERENCES, MODE_PRIVATE)
                             .edit()
                             .putString(blog.getId(), blog.getPosts().getItems().get(0).getId())
                             .apply();
@@ -178,7 +177,7 @@ public class BlogActivity extends CustomTabsActivity implements PostAdapter.OnPo
 
     public static void openBlogActivity(Context context, String blogId) {
         Intent intent = new Intent(context, BlogActivity.class);
-        intent.putExtra(BLOG_ID, blogId);
+        intent.putExtra(BLOG_ID_EXTRA, blogId);
         context.startActivity(intent);
     }
 

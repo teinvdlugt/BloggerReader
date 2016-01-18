@@ -127,7 +127,7 @@ public class FollowingBlogsActivity extends AppCompatActivity {
                         url2 = "http://" + url2;
 
                     Blogger blogger = IOUtils.createBloggerInstance();
-                    return blogger.blogs().getByUrl(url2).setKey(IOUtils.API_KEY).execute();
+                    return blogger.blogs().getByUrl(url2).setKey(Constants.API_KEY).execute();
                 } catch (IOException e) {
                     e.printStackTrace();
                     return null;

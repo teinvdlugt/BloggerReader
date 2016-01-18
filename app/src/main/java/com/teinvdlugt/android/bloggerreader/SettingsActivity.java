@@ -10,6 +10,7 @@ import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 
 public class SettingsActivity extends AppCompatActivity {
+
     @SuppressWarnings("ConstantConditions")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,7 +41,7 @@ public class SettingsActivity extends AppCompatActivity {
 
         @Override
         public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-            if (key.equals(AlarmUtils.NOTIFICATION_PREFERENCE_KEY)) {
+            if (key.equals(Constants.NOTIFICATION_PREFERENCE_KEY)) {
                 AlarmUtils.setOrCancelAlarm(getActivity(), sharedPreferences.getBoolean(key, true));
             }
         }

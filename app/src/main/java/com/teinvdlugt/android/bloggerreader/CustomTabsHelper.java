@@ -91,10 +91,6 @@ public class CustomTabsHelper {
     }
 
     private static String chromePackageName;
-    private static final String STABLE = "com.android.chrome";
-    private static final String BETA = "com.chrome.beta";
-    private static final String DEV = "com.chrome.dev";
-    private static final String LOCAL = "com.google.android.apps.chrome";
 
     public static String getChromePackageName(Context context) {
         if (chromePackageName != null) return chromePackageName;
@@ -131,14 +127,14 @@ public class CustomTabsHelper {
                 && !hasSpecializedHandlerIntents(context, activityIntent)
                 && packagesSupportingCustomTabs.contains(defaultViewHandlerPackageName)) {
             chromePackageName = defaultViewHandlerPackageName;
-        } else if (packagesSupportingCustomTabs.contains(STABLE)) {
-            chromePackageName = STABLE;
-        } else if (packagesSupportingCustomTabs.contains(BETA)) {
-            chromePackageName = BETA;
-        } else if (packagesSupportingCustomTabs.contains(DEV)) {
-            chromePackageName = DEV;
-        } else if (packagesSupportingCustomTabs.contains(LOCAL)) {
-            chromePackageName = LOCAL;
+        } else if (packagesSupportingCustomTabs.contains(Constants.STABLE)) {
+            chromePackageName = Constants.STABLE;
+        } else if (packagesSupportingCustomTabs.contains(Constants.BETA)) {
+            chromePackageName = Constants.BETA;
+        } else if (packagesSupportingCustomTabs.contains(Constants.DEV)) {
+            chromePackageName = Constants.DEV;
+        } else if (packagesSupportingCustomTabs.contains(Constants.LOCAL)) {
+            chromePackageName = Constants.LOCAL;
         }
         return chromePackageName;
     }

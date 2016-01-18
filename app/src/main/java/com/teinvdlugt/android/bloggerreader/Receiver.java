@@ -19,15 +19,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Receiver extends BroadcastReceiver {
-    private static final int NOTIFICATION_ID = 0;
 
     @Override
     public void onReceive(final Context context, Intent intent) {
         PreferenceManager.setDefaultValues(context, R.xml.preferences, false);
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
-        boolean notifications = preferences.getBoolean(AlarmUtils.NOTIFICATION_PREFERENCE_KEY, true);
+        boolean notifications = preferences.getBoolean(Constants.NOTIFICATION_PREFERENCE_KEY, true);
 
-        if ("android.intent.action.BOOT_COMPLETED".equals(intent.getAction())) {
+        if (Constants.BOOT_COMPLETED_ACTION.equals(intent.getAction())) {
             // Phone just booted, reset alarm
             if (notifications) AlarmUtils.setOrCancelAlarm(context, true);
         }
@@ -48,14 +47,14 @@ public class Receiver extends BroadcastReceiver {
                     List<Blog> blogsWithNewPosts = new ArrayList<>();
                     List<Blog> following = IOUtils.blogsFollowing(context);
 
-                    SharedPreferences pref = context.getSharedPreferences(IOUtils.LAST_POST_ID_PREFERENCES, Context.MODE_PRIVATE);
+                    SharedPreferences pref = context.getSharedPreferences(Constants.LAST_POST_ID_PREFERENCES, Context.MODE_PRIVATE);
                     SharedPreferences.Editor prefEditor = pref.edit();
 
                     Blogger blogger = IOUtils.createBloggerInstance();
                     for (Blog blog : following) {
                         try {
                             String newPostId = blogger.blogs().get(blog.getId()).setMaxPosts(1L)
-                                    .setKey(IOUtils.API_KEY).execute().getPosts().getItems().get(0).getId();
+                                    .setKey(Constants.API_KEY).execute().getPosts().getItems().get(0).getId();
                             String oldPostId = pref.getString(blog.getId(), null);
 
                             if (newPostId != null && oldPostId != null && !newPostId.equals(oldPostId)) {
@@ -116,7 +115,7 @@ public class Receiver extends BroadcastReceiver {
                 .setAutoCancel(true)
                 .build();
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        notificationManager.notify(NOTIFICATION_ID, notification);
+        notificationManager.notify(Constants.NOTIFICATION_ID, notification);
     }
 
     private static List<String> names(List<Blog> blogs) {

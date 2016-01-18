@@ -9,7 +9,6 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 
 public class AlarmUtils {
-    public static final String NOTIFICATION_PREFERENCE_KEY = "notifications";
 
     private AlarmUtils() {
     }
