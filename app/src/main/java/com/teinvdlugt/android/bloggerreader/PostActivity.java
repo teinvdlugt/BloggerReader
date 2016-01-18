@@ -186,7 +186,7 @@ public class PostActivity extends AppCompatActivity {
                         blogNameTV.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View v) {
-                                BlogActivity.openBlogActivity(PostActivity.this, blog.getId());
+                                BlogActivity.openBlogActivity(PostActivity.this, blog.getName(), blog.getId());
                             }
                         });
                         break;

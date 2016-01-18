@@ -8,14 +8,6 @@
     android:paddingBottom="0dp">
 
     <TextView
-        android:id="@+id/name"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        android:textSize="24sp"
-        tools:text="Official Google Blog" />
-
-    <TextView
         android:id="@+id/description"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -24,9 +16,11 @@
         tools:text="Insights from Googlers into our products" />
 
     <Button
+        android:layout_marginTop="8dp"
         android:id="@+id/follow_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/follow"
-        android:visibility="gone" />
+        android:visibility="gone"
+        tools:visibility="visible" />
 </LinearLayout>

@@ -23,6 +23,7 @@ import java.io.IOException;
 
 public class BlogActivity extends CustomTabsActivity implements PostAdapter.OnPostClickListener,
         PostAdapter.HeaderUpdateListener {
+    public static final String BLOG_NAME_EXTRA = "blog_name";
     public static final String BLOG_ID_EXTRA = "blog_id";
 
     private ViewHolder holder;
@@ -38,7 +39,10 @@ public class BlogActivity extends CustomTabsActivity implements PostAdapter.OnPo
         super.onCreate(savedInstanceState);
 
         blogId = getIntent().getStringExtra(BLOG_ID_EXTRA);
-        if (blogId == null) return;
+        String blogName = getIntent().getStringExtra(BLOG_NAME_EXTRA);
+        if (blogId == null || blogName == null)
+            throw new IllegalArgumentException("The intent extras blog_name and blog_id were not passed");
+        setTitle(blogName);
 
         setContentView(R.layout.activity_blog);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -142,7 +146,6 @@ public class BlogActivity extends CustomTabsActivity implements PostAdapter.OnPo
         holder = (ViewHolder) holder1;
 
         if (blog != null) {
-            if (blog.getName() != null) holder.nameTV.setText(blog.getName());
             if (blog.getDescription() != null) holder.descTV.setText(blog.getDescription());
             if (followingBlogDetermined) {
                 holder.followButton.setVisibility(View.VISIBLE);
@@ -175,19 +178,19 @@ public class BlogActivity extends CustomTabsActivity implements PostAdapter.OnPo
         return false;
     }
 
-    public static void openBlogActivity(Context context, String blogId) {
+    public static void openBlogActivity(Context context, String blogName, String blogId) {
         Intent intent = new Intent(context, BlogActivity.class);
+        intent.putExtra(BLOG_NAME_EXTRA, blogName);
         intent.putExtra(BLOG_ID_EXTRA, blogId);
         context.startActivity(intent);
     }
 
     private class ViewHolder extends RecyclerView.ViewHolder {
-        private TextView nameTV, descTV;
+        private TextView descTV;
         private Button followButton;
 
         public ViewHolder(View itemView) {
             super(itemView);
-            nameTV = (TextView) itemView.findViewById(R.id.name);
             descTV = (TextView) itemView.findViewById(R.id.description);
             followButton = (Button) itemView.findViewById(R.id.follow_button);
 

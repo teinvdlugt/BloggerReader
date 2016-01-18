@@ -247,7 +247,7 @@ public class FollowingBlogsActivity extends AppCompatActivity {
                 itemView.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        BlogActivity.openBlogActivity(FollowingBlogsActivity.this, blog.getId());
+                        BlogActivity.openBlogActivity(FollowingBlogsActivity.this, blog.getName(), blog.getId());
                     }
                 });
                 itemView.setOnLongClickListener(new View.OnLongClickListener() {
