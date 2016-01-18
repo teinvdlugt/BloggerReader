@@ -46,6 +46,7 @@ public class MainActivity extends CustomTabsActivity
     private SwipeRefreshLayout srLayout;
     private ActionBarDrawerToggle toggle;
     private NavigationView navigationView;
+    private DrawerLayout drawerLayout;
 
     private PostAdapter adapter;
     private Blogger blogger;
@@ -61,7 +62,7 @@ public class MainActivity extends CustomTabsActivity
         blogger = IOUtils.createBloggerInstance();
 
         // Find views
-        DrawerLayout drawerLayout = (DrawerLayout) findViewById(R.id.drawerLayout);
+        drawerLayout = (DrawerLayout) findViewById(R.id.drawerLayout);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         srLayout = (SwipeRefreshLayout) findViewById(R.id.swipeRefreshLayout);
         navigationView = (NavigationView) findViewById(R.id.navigationView);
@@ -229,6 +230,7 @@ public class MainActivity extends CustomTabsActivity
 
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
+        drawerLayout.closeDrawer(navigationView);
         switch (item.getItemId()) {
             case R.id.home:
                 navigationView.setCheckedItem(R.id.home);
