@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.graphics.PorterDuff;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -25,6 +26,7 @@ import android.support.v7.widget.Toolbar;
 import android.text.Html;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 
 import com.google.api.services.blogger.Blogger;
 import com.google.api.services.blogger.model.Blog;
@@ -58,6 +60,8 @@ public class MainActivity extends CustomTabsActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
+        findViewById(R.id.follow_first_blog_button).getBackground().setColorFilter(
+                IOUtils.getColor(this, R.color.colorAccent), PorterDuff.Mode.MULTIPLY);
 
         blogger = IOUtils.createBloggerInstance();
 
@@ -109,11 +113,24 @@ public class MainActivity extends CustomTabsActivity
             adapter.notifyDataSetChanged();
         }
 
+        final List<Blog> blogs = IOUtils.blogsFollowing(MainActivity.this);
+        if (blogs.isEmpty()) {
+            findViewById(R.id.not_yet_following_blogs_layout).setVisibility(View.VISIBLE);
+            srLayout.post(new Runnable() {
+                @Override
+                public void run() {
+                    srLayout.setRefreshing(false);
+                }
+            });
+            return;
+        } else {
+            findViewById(R.id.not_yet_following_blogs_layout).setVisibility(View.GONE);
+        }
+
         new AsyncTask<Void, Post, Void>() {
             @Override
             protected Void doInBackground(Void... params) {
                 if (totalRefresh) {
-                    List<Blog> blogs = IOUtils.blogsFollowing(MainActivity.this);
                     SharedPreferences visibleBlogsPref = getPreferences(MODE_PRIVATE);
                     for (Iterator<Blog> it = blogs.iterator(); it.hasNext(); ) {
                         if (!visibleBlogsPref.getBoolean(Constants.BLOG_VISIBLE_PREFERENCE + it.next().getId(), true)) {
@@ -204,8 +221,6 @@ public class MainActivity extends CustomTabsActivity
             @Override
             protected void onPostExecute(Void aVoid) {
                 srLayout.setRefreshing(false);
-
-                // TODO: 20-12-2015 If no posts are displayed, display "Follow blogs" text
 
                 if (adapter.getData() != null && PreferenceManager.getDefaultSharedPreferences(MainActivity.this)
                         .getBoolean(Constants.USE_CUSTOM_TABS_PREFERENCE, true)) {
@@ -348,5 +363,11 @@ public class MainActivity extends CustomTabsActivity
             ClipData clip = ClipData.newPlainText(label, text);
             clipboard.setPrimaryClip(clip);
         }
+    }
+
+    public void onClickFollowFirstBlog(View view) {
+        Intent intent = new Intent(this, FollowingBlogsActivity.class);
+        intent.putExtra(FollowingBlogsActivity.ADD_BLOG_EXTRA, true);
+        startActivity(intent);
     }
 }

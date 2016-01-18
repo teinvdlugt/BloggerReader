@@ -2,6 +2,7 @@ package com.teinvdlugt.android.bloggerreader;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.graphics.PorterDuff;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.Snackbar;
@@ -33,6 +34,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class FollowingBlogsActivity extends AppCompatActivity {
+    public static final String ADD_BLOG_EXTRA = "add_blog";
+
     private FollowingBlogsAdapter adapter;
 
     @SuppressWarnings("ConstantConditions")
@@ -43,6 +46,8 @@ public class FollowingBlogsActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        findViewById(R.id.follow_first_blog_button).getBackground().setColorFilter(
+                IOUtils.getColor(this, R.color.colorAccent), PorterDuff.Mode.MULTIPLY);
 
         RecyclerView recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -50,12 +55,21 @@ public class FollowingBlogsActivity extends AppCompatActivity {
         recyclerView.setAdapter(adapter);
 
         refresh();
+
+        if (getIntent().getBooleanExtra(ADD_BLOG_EXTRA, false))
+            onClickAddBlog(null);
     }
 
     private void refresh() {
         List<Blog> blogs = IOUtils.blogsFollowing(this);
-        adapter.setData(blogs);
-        adapter.notifyDataSetChanged();
+
+        if (blogs.isEmpty()) {
+            findViewById(R.id.not_yet_following_blogs_layout).setVisibility(View.VISIBLE);
+        } else {
+            findViewById(R.id.not_yet_following_blogs_layout).setVisibility(View.GONE);
+            adapter.setData(blogs);
+            adapter.notifyDataSetChanged();
+        }
     }
 
     public void onClickAddBlog(View view) {
@@ -211,6 +225,10 @@ public class FollowingBlogsActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         refresh();
+    }
+
+    public void onClickFollowFirstBlog(View view) {
+        onClickAddBlog(view);
     }
 
     private class FollowingBlogsAdapter extends RecyclerView.Adapter<FollowingBlogsAdapter.ViewHolder> {

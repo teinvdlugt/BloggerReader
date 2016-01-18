@@ -36,4 +36,6 @@
     <string name="use_custom_tabs_ask_dialog_message">The post viewer is still in beta. You can change your choice in the settings.</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
+    <string name="not_yet_following_blogs">You are not yet following any blogs.</string>
+    <string name="follow_first_blog">Follow a blog</string>
 </resources>
