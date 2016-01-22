@@ -8,13 +8,13 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
-import android.graphics.PorterDuff;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.design.widget.NavigationView;
+import android.support.design.widget.Snackbar;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -49,6 +49,7 @@ public class MainActivity extends CustomTabsActivity
     private ActionBarDrawerToggle toggle;
     private NavigationView navigationView;
     private DrawerLayout drawerLayout;
+    private Snackbar notFollowingBlogsSnackbar;
 
     private PostAdapter adapter;
     private Blogger blogger;
@@ -60,8 +61,6 @@ public class MainActivity extends CustomTabsActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
-        findViewById(R.id.follow_first_blog_button).getBackground().setColorFilter(
-                IOUtils.getColor(this, R.color.colorAccent), PorterDuff.Mode.MULTIPLY);
 
         blogger = IOUtils.createBloggerInstance();
 
@@ -115,7 +114,14 @@ public class MainActivity extends CustomTabsActivity
 
         final List<Blog> blogs = IOUtils.blogsFollowing(MainActivity.this);
         if (blogs.isEmpty()) {
-            findViewById(R.id.not_yet_following_blogs_layout).setVisibility(View.VISIBLE);
+            notFollowingBlogsSnackbar = Snackbar.make(recyclerView, R.string.not_yet_following_blogs, Snackbar.LENGTH_INDEFINITE);
+            notFollowingBlogsSnackbar.setAction(R.string.follow_first_blog, new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    onClickFollowFirstBlog(v);
+                }
+            });
+            notFollowingBlogsSnackbar.show();
             srLayout.post(new Runnable() {
                 @Override
                 public void run() {
@@ -123,8 +129,8 @@ public class MainActivity extends CustomTabsActivity
                 }
             });
             return;
-        } else {
-            findViewById(R.id.not_yet_following_blogs_layout).setVisibility(View.GONE);
+        } else if (notFollowingBlogsSnackbar != null) {
+            notFollowingBlogsSnackbar.dismiss();
         }
 
         new AsyncTask<Void, Post, Void>() {

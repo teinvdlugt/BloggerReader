@@ -2,7 +2,6 @@ package com.teinvdlugt.android.bloggerreader;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
-import android.graphics.PorterDuff;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.Snackbar;
@@ -37,6 +36,8 @@ public class FollowingBlogsActivity extends AppCompatActivity {
     public static final String ADD_BLOG_EXTRA = "add_blog";
 
     private FollowingBlogsAdapter adapter;
+    private RecyclerView recyclerView;
+    private Snackbar notFollowingBlogsSnackbar;
 
     @SuppressWarnings("ConstantConditions")
     @Override
@@ -46,10 +47,8 @@ public class FollowingBlogsActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        findViewById(R.id.follow_first_blog_button).getBackground().setColorFilter(
-                IOUtils.getColor(this, R.color.colorAccent), PorterDuff.Mode.MULTIPLY);
 
-        RecyclerView recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
+        recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         adapter = new FollowingBlogsAdapter();
         recyclerView.setAdapter(adapter);
@@ -64,9 +63,16 @@ public class FollowingBlogsActivity extends AppCompatActivity {
         List<Blog> blogs = IOUtils.blogsFollowing(this);
 
         if (blogs.isEmpty()) {
-            findViewById(R.id.not_yet_following_blogs_layout).setVisibility(View.VISIBLE);
+            notFollowingBlogsSnackbar = Snackbar.make(recyclerView, R.string.not_yet_following_blogs, Snackbar.LENGTH_INDEFINITE);
+            notFollowingBlogsSnackbar.setAction(R.string.follow_first_blog, new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    onClickFollowFirstBlog(v);
+                }
+            });
+            notFollowingBlogsSnackbar.show();
         } else {
-            findViewById(R.id.not_yet_following_blogs_layout).setVisibility(View.GONE);
+            if (notFollowingBlogsSnackbar != null) notFollowingBlogsSnackbar.dismiss();
             adapter.setData(blogs);
             adapter.notifyDataSetChanged();
         }
@@ -167,9 +173,7 @@ public class FollowingBlogsActivity extends AppCompatActivity {
                         if (IOUtils.saveBlog(FollowingBlogsActivity.this, blog)) {
                             Snackbar.make(findViewById(R.id.recyclerView),
                                     getString(R.string.following_blog, blog.getName()), Snackbar.LENGTH_LONG).show();
-                            List<Blog> blogs = IOUtils.blogsFollowing(FollowingBlogsActivity.this);
-                            adapter.setData(blogs);
-                            adapter.notifyItemInserted(adapter.getItemCount() - 1);
+                            refresh();
                         } else {
                             Snackbar.make(findViewById(R.id.recyclerView), R.string.following_blog_error, Snackbar.LENGTH_LONG).show();
                         }
