@@ -38,4 +38,7 @@
     <string name="no">No</string>
     <string name="not_yet_following_blogs">You are not yet following any blogs.</string>
     <string name="follow_first_blog">Follow a blog</string>
+    <string name="blog_not_found_dialog_title">Blog not found</string>
+    <string name="already_following_blog_dialog_message">You are already following the blog %1$s.</string>
+    <string name="already_following_blog_dialog_title">Already following</string>
 </resources>

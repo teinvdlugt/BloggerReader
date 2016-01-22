@@ -161,7 +161,16 @@ public class FollowingBlogsActivity extends AppCompatActivity {
             protected void onPostExecute(Blog blog) {
                 progressDialog.dismiss();
                 if (blog == null) showBlogNotFoundDialog(url);
-                else showAddBlogDialog(blog);
+                else {
+                    List<Blog> followingBlogs = IOUtils.blogsFollowing(FollowingBlogsActivity.this);
+                    List<String> ids = new ArrayList<>();
+                    for (Blog followingBlog : followingBlogs)
+                        ids.add(followingBlog.getId());
+
+                    if (ids.contains(blog.getId()))
+                        showAlreadyFollowingBlogDialog(blog.getName());
+                    else showAddBlogDialog(blog);
+                }
             }
         }.execute();
     }
@@ -185,10 +194,20 @@ public class FollowingBlogsActivity extends AppCompatActivity {
                 .create().show();
     }
 
+    private void showAlreadyFollowingBlogDialog(String name) {
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.already_following_blog_dialog_title)
+                .setMessage(Html.fromHtml(getString(R.string.already_following_blog_dialog_message,
+                        "<b>" + name + "</b>")))
+                .setPositiveButton(R.string.ok, null)
+                .create().show();
+    }
+
     private void showBlogNotFoundDialog(String url) {
         new AlertDialog.Builder(this)
-                .setTitle("Blog not found")
+                .setTitle(R.string.blog_not_found_dialog_title)
                 .setMessage(getString(R.string.blog_not_found, url))
+                .setPositiveButton(R.string.ok, null)
                 .create().show();
     }
 
