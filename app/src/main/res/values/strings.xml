@@ -12,7 +12,7 @@
     <string name="unknown_blog">Unknown blog name</string>
     <string name="add">Add</string>
     <string name="cancel">Cancel</string>
-    <string name="blog_url">Blog URL</string>
+    <string name="blog_url">Blog URL: blogname.blogspot.com</string>
     <string name="add_blog_dialog_title">Add a blog to follow</string>
     <string name="loading_blog">Loading blog…</string>
     <string name="blog_not_found">Sorry, no blog was found with the url %s</string>

@@ -143,6 +143,9 @@ public class FollowingBlogsActivity extends AppCompatActivity {
             protected Blog doInBackground(Void... params) {
                 try {
                     String url2 = url;
+
+                    if (!url2.contains(".blogspot."))
+                        url2 += ".blogspot.com";
                     if (!(url2.startsWith("http://") || url2.startsWith("https://")))
                         url2 = "http://" + url2;
 
