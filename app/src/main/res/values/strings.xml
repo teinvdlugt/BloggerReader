@@ -32,10 +32,10 @@
     <string name="ok">OK</string>
     <string name="custom_tabs_pref_summary_on">Now opening posts in browser view</string>
     <string name="custom_tabs_pref_summary_off">Now opening posts in Post Viewer (beta)</string>
-    <string name="use_custom_tabs_ask_dialog_title">Open post in browser?</string>
-    <string name="use_custom_tabs_ask_dialog_message">The post viewer is still in beta. You can change your choice in the settings.</string>
-    <string name="yes">Yes</string>
-    <string name="no">No</string>
+    <string name="use_custom_tabs_ask_dialog_title">Open post in browser view?</string>
+    <string name="use_custom_tabs_ask_dialog_message">The built-in post viewer is still in beta. You can change your choice in the settings.</string>
+    <string name="open_in_browser">Open in browser view</string>
+    <string name="open_in_post_viewer">Open in post view</string>
     <string name="not_yet_following_blogs">You are not yet following any blogs.</string>
     <string name="follow_first_blog">Follow a blog</string>
     <string name="blog_not_found_dialog_title">Blog not found</string>

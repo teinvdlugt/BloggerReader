@@ -290,7 +290,7 @@ public class PostActivity extends AppCompatActivity {
             new AlertDialog.Builder(activity)
                     .setTitle(R.string.use_custom_tabs_ask_dialog_title)
                     .setMessage(R.string.use_custom_tabs_ask_dialog_message)
-                    .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
+                    .setPositiveButton(R.string.open_in_browser, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             pref.edit().putBoolean(Constants.USE_CUSTOM_TABS_ASKED_PREFERENCE, true)
@@ -298,7 +298,7 @@ public class PostActivity extends AppCompatActivity {
                             activity.tabsHelper.openURL(activity, url);
                         }
                     })
-                    .setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
+                    .setNegativeButton(R.string.open_in_post_viewer, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             pref.edit().putBoolean(Constants.USE_CUSTOM_TABS_ASKED_PREFERENCE, true)
