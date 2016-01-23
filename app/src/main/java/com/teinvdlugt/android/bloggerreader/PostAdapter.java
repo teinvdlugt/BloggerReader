@@ -17,13 +17,16 @@ import java.util.List;
 public class PostAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private static final int ITEM_VIEW_TYPE = 0;
     private static final int HEADER_VIEW_TYPE = 1;
+    private static final int PROGRESS_BAR_VIEW_TYPE = 2;
 
     private List<Post> data;
     private Context context;
     private OnPostClickListener clickListener;
     private boolean header;
+    private boolean progressBar = true;
 
     private HeaderUpdateListener headerListener;
+    private LoadNextBatchListener loadNextBatchListener;
 
     public PostAdapter(Context context, List<Post> data, OnPostClickListener clickListener) {
         this.data = data;
@@ -31,9 +34,10 @@ public class PostAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         this.clickListener = clickListener;
     }
 
-    public PostAdapter(Context context, OnPostClickListener clickListener) {
+    public PostAdapter(Context context, OnPostClickListener clickListener, LoadNextBatchListener loadNextBatchListener) {
         this.context = context;
         this.clickListener = clickListener;
+        this.loadNextBatchListener = loadNextBatchListener;
     }
 
     public PostAdapter(Context context) {
@@ -64,6 +68,8 @@ public class PostAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 return new ViewHolder(LayoutInflater.from(context).inflate(R.layout.list_item_post, parent, false));
             case HEADER_VIEW_TYPE:
                 return headerListener == null ? null : headerListener.createViewHolder(parent);
+            case PROGRESS_BAR_VIEW_TYPE:
+                return new ProgressBarViewHolder(LayoutInflater.from(context).inflate(R.layout.list_item_progress_bar, parent, false));
         }
         return null;
     }
@@ -80,22 +86,28 @@ public class PostAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                     position--;
                 }
                 ((ViewHolder) holder).bind(data.get(position));
+                break;
+            case PROGRESS_BAR_VIEW_TYPE:
+                if (loadNextBatchListener != null) loadNextBatchListener.loadNextBatch();
         }
     }
 
     @Override
     public int getItemViewType(int position) {
-        if (position == 0 && header) {
+        if (getItemCount() != 0 && getItemCount() != 1 && position == getItemCount() - 1 && progressBar)
+            return PROGRESS_BAR_VIEW_TYPE;
+        if (position == 0 && header)
             return HEADER_VIEW_TYPE;
-        } else {
+        else
             return ITEM_VIEW_TYPE;
-        }
     }
 
     @Override
     public int getItemCount() {
         int items = data == null ? 0 : data.size();
-        return items + (header ? 1 : 0);
+        items += (header ? 1 : 0);
+        if (items != 0 && items != 1 && progressBar) items += 1;
+        return items;
     }
 
     private class ViewHolder extends RecyclerView.ViewHolder {
@@ -125,6 +137,12 @@ public class PostAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         }
     }
 
+    private class ProgressBarViewHolder extends RecyclerView.ViewHolder {
+        public ProgressBarViewHolder(View itemView) {
+            super(itemView);
+        }
+    }
+
     public interface OnPostClickListener {
         void onClickPost(Post post);
     }
@@ -133,5 +151,19 @@ public class PostAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         RecyclerView.ViewHolder createViewHolder(ViewGroup parent);
 
         void bindViewHolder(RecyclerView.ViewHolder holder);
+    }
+
+    public interface LoadNextBatchListener {
+        void loadNextBatch();
+    }
+
+    public void nextBatchLoaded(List<Post> batch, boolean moreComing) {
+        this.progressBar = moreComing;
+        if (!progressBar) notifyItemRemoved(getItemCount() - 1);
+        if (data.isEmpty()) return;
+
+        int dataEndPos = getItemCount() - (progressBar ? 2 : 1);
+        data.addAll(batch);
+        notifyItemRangeInserted(dataEndPos + 1, batch.size());
     }
 }

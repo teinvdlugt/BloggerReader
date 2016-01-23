@@ -22,7 +22,7 @@ import com.google.api.services.blogger.model.Post;
 import java.io.IOException;
 
 public class BlogActivity extends CustomTabsActivity implements PostAdapter.OnPostClickListener,
-        PostAdapter.HeaderUpdateListener {
+        PostAdapter.HeaderUpdateListener, PostAdapter.LoadNextBatchListener {
     public static final String BLOG_NAME_EXTRA = "blog_name";
     public static final String BLOG_ID_EXTRA = "blog_id";
 
@@ -52,11 +52,16 @@ public class BlogActivity extends CustomTabsActivity implements PostAdapter.OnPo
 
         RecyclerView recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        adapter = new PostAdapter(this, this);
+        adapter = new PostAdapter(this, this, this);
         adapter.setHeader(this);
         recyclerView.setAdapter(adapter);
 
         refresh();
+    }
+
+    @Override
+    public void loadNextBatch() {
+        // TODO: 23-1-2016 Load next batch
     }
 
     private enum ProgressUpdateType {BLOG, FOLLOWING_BLOG}

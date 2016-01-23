@@ -42,7 +42,7 @@ import java.util.Map;
 
 public class MainActivity extends CustomTabsActivity
         implements NavigationView.OnNavigationItemSelectedListener,
-        PostAdapter.OnPostClickListener {
+        PostAdapter.OnPostClickListener, PostAdapter.LoadNextBatchListener {
     private static final int FOLLOWING_BLOGS_ACTIVITY_REQUEST_CODE = 1;
     public static final String ADDED_BLOGS_EXTRA = "added_blogs";
     public static final String DELETED_BLOGS_EXTRA = "deleted_blogs";
@@ -53,6 +53,8 @@ public class MainActivity extends CustomTabsActivity
     private NavigationView navigationView;
     private DrawerLayout drawerLayout;
     private Snackbar notFollowingBlogsSnackbar;
+    private final int batchSize = 20; // Per blog
+    private int numOfBatches = 0;
 
     private PostAdapter adapter;
     private Blogger blogger;
@@ -91,7 +93,7 @@ public class MainActivity extends CustomTabsActivity
 
         // RecyclerView
         recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
-        adapter = new PostAdapter(this, this);
+        adapter = new PostAdapter(this, this, this);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(adapter);
         recyclerView.setItemAnimator(new DefaultItemAnimator());
@@ -109,6 +111,8 @@ public class MainActivity extends CustomTabsActivity
                 }
             });
         }
+
+        numOfBatches = 1;
 
         List data = adapter.getData();
         if (totalRefresh && data != null && data.size() > 0) {
@@ -138,6 +142,8 @@ public class MainActivity extends CustomTabsActivity
         }
 
         new AsyncTask<Void, Post, Void>() {
+            private long lowestDate = -1;
+
             @Override
             protected Void doInBackground(Void... params) {
                 if (totalRefresh) {
@@ -160,7 +166,7 @@ public class MainActivity extends CustomTabsActivity
 
                     for (String blogId : blogMap.keySet()) {
                         if (!blogMap.get(blogId)) {
-                            List<Post> posts = blogger.blogs().get(blogId).setMaxPosts(10L).setKey(Constants.API_KEY)
+                            List<Post> posts = blogger.blogs().get(blogId).setMaxPosts((long) batchSize).setKey(Constants.API_KEY)
                                     .execute().getPosts().getItems();
                             if (posts.size() > 0)
                                 lastPostIds.putString(blogId, posts.get(0).getId());
@@ -238,6 +244,40 @@ public class MainActivity extends CustomTabsActivity
                         tabsHelper.mayLaunchUrl(adapter.getData().get(i).getUrl());
                     }
                 }
+            }
+        }.execute();
+    }
+
+    @Override
+    public void loadNextBatch() {
+        numOfBatches++;
+        new AsyncTask<Void, Void, List<Post>>() {
+            @Override
+            protected List<Post> doInBackground(Void... params) {
+                try {
+                    if (IOUtils.checkNotConnected(MainActivity.this)) return null;
+
+                    List<Post> batch = new ArrayList<>();
+
+                    for (String blogId : blogMap.keySet()) {
+                        List<Post> posts = blogger.blogs().get(blogId).setMaxPosts(numOfBatches * (long) batchSize)
+                                .setKey(Constants.API_KEY).execute().getPosts().getItems();
+                        batch.addAll(posts.subList((numOfBatches - 1) * batchSize, posts.size()));
+
+                        // TODO: 23-1-2016 Sort posts
+                    }
+
+                    return batch;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    return null;
+                }
+            }
+
+            @Override
+            protected void onPostExecute(List<Post> posts) {
+                super.onPostExecute(posts);
+                adapter.nextBatchLoaded(posts, true); // TODO: 23-1-2016 Look if more posts are coming
             }
         }.execute();
     }
