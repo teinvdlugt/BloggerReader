@@ -1,6 +1,7 @@
 package com.teinvdlugt.android.bloggerreader;
 
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -14,15 +15,12 @@ import android.text.Editable;
 import android.text.Html;
 import android.text.TextWatcher;
 import android.util.TypedValue;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.google.api.services.blogger.Blogger;
@@ -110,47 +108,47 @@ public class FollowingBlogsActivity extends AppCompatActivity {
         dialog.show();
     }
 
+    private boolean progressDialogDismissed = false;
+
     private void processURL(final String url) {
-        ProgressBar pBar = new ProgressBar(this);
-        TextView msg = new TextView(this);
+        progressDialogDismissed = false;
 
-        // Progress bar layout params
-        int _16dp = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 16, getResources().getDisplayMetrics());
-        LinearLayout.LayoutParams pBarParams = new LinearLayout.LayoutParams
-                (ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        pBarParams.gravity = Gravity.CENTER_VERTICAL;
-        pBarParams.setMargins(_16dp, _16dp, _16dp, _16dp);
-        pBar.setLayoutParams(pBarParams);
-
-        // TextView layout params
-        LinearLayout.LayoutParams textViewParams = new LinearLayout.LayoutParams
-                (ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        textViewParams.gravity = Gravity.CENTER_VERTICAL;
-        msg.setText(R.string.loading_blog);
-        msg.setLayoutParams(textViewParams);
-
-        // Container
-        LinearLayout ll = new LinearLayout(this);
-        ll.addView(pBar);
-        ll.addView(msg);
-
-        final AlertDialog progressDialog = new AlertDialog.Builder(this)
-                .setView(ll).create();
-        progressDialog.show();
+        final ProgressDialog dialog = new ProgressDialog(this);
+        dialog.setMessage(getString(R.string.loading_blog));
+        dialog.setIndeterminate(true);
+        dialog.setButton(AlertDialog.BUTTON_NEUTRAL, getString(R.string.cancel), new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+        dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialog) {
+                progressDialogDismissed = true;
+            }
+        });
+        dialog.setCancelable(false);
+        dialog.setCanceledOnTouchOutside(false);
+        dialog.show();
 
         new AsyncTask<Void, Void, Blog>() {
+            private String url2;
+            private String urlWithScheme;
+
             @Override
             protected Blog doInBackground(Void... params) {
                 try {
-                    String url2 = url;
+                    url2 = url;
 
                     if (!url2.contains(".blogspot."))
                         url2 += ".blogspot.com";
+                    urlWithScheme = url2;
                     if (!(url2.startsWith("http://") || url2.startsWith("https://")))
-                        url2 = "http://" + url2;
+                        urlWithScheme = "http://" + urlWithScheme;
 
                     Blogger blogger = IOUtils.createBloggerInstance();
-                    return blogger.blogs().getByUrl(url2).setKey(Constants.API_KEY).execute();
+                    return blogger.blogs().getByUrl(urlWithScheme).setKey(Constants.API_KEY).execute();
                 } catch (IOException e) {
                     e.printStackTrace();
                     return null;
@@ -159,8 +157,10 @@ public class FollowingBlogsActivity extends AppCompatActivity {
 
             @Override
             protected void onPostExecute(Blog blog) {
-                progressDialog.dismiss();
-                if (blog == null) showBlogNotFoundDialog(url);
+                if (progressDialogDismissed) return;
+
+                dialog.dismiss();
+                if (blog == null) showBlogNotFoundDialog(url2);
                 else {
                     List<Blog> followingBlogs = IOUtils.blogsFollowing(FollowingBlogsActivity.this);
                     List<String> ids = new ArrayList<>();
@@ -176,7 +176,9 @@ public class FollowingBlogsActivity extends AppCompatActivity {
     }
 
     private void showAddBlogDialog(final Blog blog) {
-        String msg = getString(R.string.do_you_want_to_follow_this_blog, "<b>" + blog.getName() + "</b>\n", blog.getUrl());
+        String msg = getString(R.string.do_you_want_to_follow_this_blog)
+                + "<br>" + getString(R.string.name_colon, "<b>" + blog.getName() + "</b>")
+                + "<br>" + getString(R.string.url_colon, blog.getUrl());
         new AlertDialog.Builder(this)
                 .setMessage(Html.fromHtml(msg))
                 .setPositiveButton(R.string.follow, new DialogInterface.OnClickListener() {

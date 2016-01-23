@@ -61,6 +61,7 @@ public class MainActivity extends CustomTabsActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
+        // TODO Integrate Google Analytics
 
         blogger = IOUtils.createBloggerInstance();
 
