@@ -43,6 +43,9 @@ import java.util.Map;
 public class MainActivity extends CustomTabsActivity
         implements NavigationView.OnNavigationItemSelectedListener,
         PostAdapter.OnPostClickListener {
+    private static final int FOLLOWING_BLOGS_ACTIVITY_REQUEST_CODE = 1;
+    public static final String ADDED_BLOGS_EXTRA = "added_blogs";
+    public static final String DELETED_BLOGS_EXTRA = "deleted_blogs";
 
     private RecyclerView recyclerView;
     private SwipeRefreshLayout srLayout;
@@ -259,7 +262,7 @@ public class MainActivity extends CustomTabsActivity
                 break;
             case R.id.follow_blog:
                 Intent intent = new Intent(this, FollowingBlogsActivity.class);
-                startActivity(intent);
+                startActivityForResult(intent, FOLLOWING_BLOGS_ACTIVITY_REQUEST_CODE);
                 break;
             case R.id.settings:
                 Intent settingsIntent = new Intent(this, SettingsActivity.class);
@@ -267,6 +270,25 @@ public class MainActivity extends CustomTabsActivity
                 break;
         }
         return false;
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == FOLLOWING_BLOGS_ACTIVITY_REQUEST_CODE
+                && resultCode == RESULT_OK
+                && data != null) {
+            List<String> deletedBlogs = data.getStringArrayListExtra(DELETED_BLOGS_EXTRA);
+            List<String> addedBlogs = data.getStringArrayListExtra(ADDED_BLOGS_EXTRA);
+
+            if (deletedBlogs != null && !deletedBlogs.isEmpty())
+                removeBlogs(deletedBlogs);
+            if (addedBlogs != null && !addedBlogs.isEmpty()) {
+                for (String blogId : addedBlogs)
+                    blogMap.put(blogId, false);
+                refresh(false);
+            }
+        }
     }
 
     @Override

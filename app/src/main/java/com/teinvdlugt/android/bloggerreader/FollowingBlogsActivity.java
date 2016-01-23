@@ -3,6 +3,7 @@ package com.teinvdlugt.android.bloggerreader;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.Snackbar;
@@ -36,6 +37,9 @@ public class FollowingBlogsActivity extends AppCompatActivity {
     private FollowingBlogsAdapter adapter;
     private RecyclerView recyclerView;
     private Snackbar notFollowingBlogsSnackbar;
+
+    private ArrayList<String> deletedBlogs = new ArrayList<>();
+    private ArrayList<String> addedBlogs = new ArrayList<>();
 
     @SuppressWarnings("ConstantConditions")
     @Override
@@ -188,6 +192,9 @@ public class FollowingBlogsActivity extends AppCompatActivity {
                             Snackbar.make(findViewById(R.id.recyclerView),
                                     getString(R.string.following_blog, blog.getName()), Snackbar.LENGTH_LONG).show();
                             refresh();
+
+                            if (!deletedBlogs.remove(blog.getId()))
+                                addedBlogs.add(blog.getId());
                         } else {
                             Snackbar.make(findViewById(R.id.recyclerView), R.string.following_blog_error, Snackbar.LENGTH_LONG).show();
                         }
@@ -232,6 +239,20 @@ public class FollowingBlogsActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    public void finish() {
+        setResultExtras();
+        super.finish();
+    }
+
+    private void setResultExtras() {
+        // Intent to put data to for MainActivity
+        Intent intent = new Intent();
+        if (addedBlogs != null) intent.putExtra(MainActivity.ADDED_BLOGS_EXTRA, addedBlogs);
+        if (addedBlogs != null) intent.putExtra(MainActivity.DELETED_BLOGS_EXTRA, deletedBlogs);
+        setResult(RESULT_OK, intent);
+    }
+
     private void deleteBlog(final Blog blog) {
         new AlertDialog.Builder(this)
                 .setTitle("Unfollow blog")
@@ -244,6 +265,9 @@ public class FollowingBlogsActivity extends AppCompatActivity {
                             IOUtils.overwriteBlogs(FollowingBlogsActivity.this, adapter.data);
                             adapter.notifyItemRemoved(position);
                         }
+
+                        if (!addedBlogs.remove(blog.getId()))
+                            deletedBlogs.add(blog.getId());
                     }
                 }).setNegativeButton(R.string.cancel, null)
                 .create().show();
