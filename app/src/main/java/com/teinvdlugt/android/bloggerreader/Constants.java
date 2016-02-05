@@ -9,14 +9,13 @@ public class Constants {
 
     // Other preferences
     public static final String BLOG_VISIBLE_PREFERENCE = "blog_visible_";
-    public static final String LAST_POST_ID_PREFERENCES = "most_recent_posts";
+    public static final String LAST_POST_ID_PREF = "most_recent_post_";
 
     // API Key
     public static final String API_KEY = "AIzaSyAsG_pjWPPXYWq68igzilu77ss0qRP5yM8"; // TODO Move to protected file!
 
     // File names
     public static final String BLOGS_FOLLOWING_FILE_NAME = "blogs_following";
-    public static final String LAST_POST_ID_FILE_NAME = "most_recent_posts";
 
     // Chrome package names
     static final String STABLE = "com.android.chrome";

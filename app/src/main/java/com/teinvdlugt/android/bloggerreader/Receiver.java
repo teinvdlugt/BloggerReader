@@ -50,7 +50,7 @@ public class Receiver extends BroadcastReceiver {
                     Set<Blog> blogsWithNewPosts = new HashSet<>();
                     List<Blog> following = IOUtils.blogsFollowing(context);
 
-                    SharedPreferences pref = context.getSharedPreferences(Constants.LAST_POST_ID_PREFERENCES, Context.MODE_PRIVATE);
+                    SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(context);
                     SharedPreferences.Editor prefEditor = pref.edit();
 
                     Blogger blogger = IOUtils.createBloggerInstance();
@@ -58,14 +58,14 @@ public class Receiver extends BroadcastReceiver {
                         try {
                             String newPostId = blogger.blogs().get(blog.getId()).setMaxPosts(1L)
                                     .setKey(Constants.API_KEY).execute().getPosts().getItems().get(0).getId();
-                            String oldPostId = pref.getString(blog.getId(), null);
+                            String oldPostId = pref.getString(Constants.LAST_POST_ID_PREF + blog.getId(), null);
 
                             if (newPostId != null && oldPostId != null && !newPostId.equals(oldPostId)) {
                                 // New post available!
                                 blogsWithNewPosts.add(blog);
 
                                 // Update most_recent_posts sharedPreferences
-                                prefEditor.putString(blog.getId(), newPostId);
+                                prefEditor.putString(Constants.LAST_POST_ID_PREF + blog.getId(), newPostId);
                             }
                         } catch (NullPointerException | IOException | IndexOutOfBoundsException e) {
                             e.printStackTrace();

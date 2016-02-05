@@ -162,14 +162,14 @@ public class MainActivity extends CustomTabsActivity
                 try {
                     if (IOUtils.checkNotConnected(MainActivity.this)) return null;
 
-                    SharedPreferences.Editor lastPostIds = getSharedPreferences(Constants.LAST_POST_ID_PREFERENCES, MODE_PRIVATE).edit();
+                    SharedPreferences.Editor prefEditor = PreferenceManager.getDefaultSharedPreferences(MainActivity.this).edit();
 
                     for (String blogId : blogMap.keySet()) {
                         if (!blogMap.get(blogId)) {
                             List<Post> posts = blogger.blogs().get(blogId).setMaxPosts((long) batchSize).setKey(Constants.API_KEY)
                                     .execute().getPosts().getItems();
                             if (posts.size() > 0)
-                                lastPostIds.putString(blogId, posts.get(0).getId());
+                                prefEditor.putString(Constants.LAST_POST_ID_PREF + blogId, posts.get(0).getId());
 
                             // Convert to native array
                             Post[] postArray = new Post[posts.size()];
@@ -182,7 +182,7 @@ public class MainActivity extends CustomTabsActivity
                         }
                     }
 
-                    lastPostIds.apply();
+                    prefEditor.apply();
 
                     return null;
 

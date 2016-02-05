@@ -6,6 +6,8 @@ import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -81,9 +83,9 @@ public class BlogActivity extends CustomTabsActivity implements PostAdapter.OnPo
                     followingBlog = IOUtils.blogFollowed(BlogActivity.this, blog.getId());
                     publishProgress(ProgressUpdateType.FOLLOWING_BLOG);
 
-                    getSharedPreferences(Constants.LAST_POST_ID_PREFERENCES, MODE_PRIVATE)
+                    PreferenceManager.getDefaultSharedPreferences(BlogActivity.this)
                             .edit()
-                            .putString(blog.getId(), blog.getPosts().getItems().get(0).getId())
+                            .putString(Constants.LAST_POST_ID_PREF + blog.getId(), blog.getPosts().getItems().get(0).getId())
                             .apply();
                 } catch (IOException | NullPointerException | IndexOutOfBoundsException e) {
                     e.printStackTrace();
