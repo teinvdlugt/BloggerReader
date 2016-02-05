@@ -16,7 +16,10 @@ import com.google.api.services.blogger.model.Blog;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class Receiver extends BroadcastReceiver {
 
@@ -44,7 +47,7 @@ public class Receiver extends BroadcastReceiver {
             @Override
             protected List<String> doInBackground(Void... params) {
                 try {
-                    List<Blog> blogsWithNewPosts = new ArrayList<>();
+                    Set<Blog> blogsWithNewPosts = new HashSet<>();
                     List<Blog> following = IOUtils.blogsFollowing(context);
 
                     SharedPreferences pref = context.getSharedPreferences(Constants.LAST_POST_ID_PREFERENCES, Context.MODE_PRIVATE);
@@ -118,7 +121,7 @@ public class Receiver extends BroadcastReceiver {
         notificationManager.notify(Constants.NOTIFICATION_ID, notification);
     }
 
-    private static List<String> names(List<Blog> blogs) {
+    private static List<String> names(Collection<Blog> blogs) {
         List<String> names = new ArrayList<>();
         for (Blog blog : blogs) {
             names.add(blog.getName());
