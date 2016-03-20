@@ -141,9 +141,9 @@ public class MainActivity extends CustomTabsActivity
             notFollowingBlogsSnackbar.dismiss();
         }
 
-        new AsyncTask<Void, Post, Void>() {
-            private long lowestDate = -1;
+        // TODO: 5-2-2016 Use AsyncTaskLoader to maintain data after configuration change
 
+        new AsyncTask<Void, Post, Void>() {
             @Override
             protected Void doInBackground(Void... params) {
                 if (totalRefresh) {
