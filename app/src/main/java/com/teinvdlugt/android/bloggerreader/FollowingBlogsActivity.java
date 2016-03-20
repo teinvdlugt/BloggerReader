@@ -2,6 +2,7 @@ package com.teinvdlugt.android.bloggerreader;
 
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
@@ -31,7 +32,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FollowingBlogsActivity extends AppCompatActivity {
+public class FollowingBlogsActivity extends AppCompatActivity implements FollowingBlogsAdapter.CallBacks {
     public static final String ADD_BLOG_EXTRA = "add_blog";
 
     private FollowingBlogsAdapter adapter;
@@ -75,7 +76,7 @@ public class FollowingBlogsActivity extends AppCompatActivity {
             notFollowingBlogsSnackbar.show();
         } else {
             if (notFollowingBlogsSnackbar != null) notFollowingBlogsSnackbar.dismiss();
-            adapter.setData(blogs);
+            adapter.setData(this, blogs, this);
             adapter.notifyDataSetChanged();
         }
     }
@@ -260,9 +261,9 @@ public class FollowingBlogsActivity extends AppCompatActivity {
                 .setPositiveButton(R.string.unfollow, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        int position = adapter.data.indexOf(blog);
-                        if (position != -1 && adapter.data.remove(blog)) {
-                            IOUtils.overwriteBlogs(FollowingBlogsActivity.this, adapter.data);
+                        int position = adapter.getData().indexOf(blog);
+                        if (position != -1 && adapter.getData().remove(blog)) {
+                            IOUtils.overwriteBlogs(FollowingBlogsActivity.this, adapter.getData());
                             adapter.notifyItemRemoved(position);
                         }
 
@@ -283,63 +284,121 @@ public class FollowingBlogsActivity extends AppCompatActivity {
         onClickAddBlog(view);
     }
 
-    private class FollowingBlogsAdapter extends RecyclerView.Adapter<FollowingBlogsAdapter.ViewHolder> {
-        private List<Blog> data = new ArrayList<>();
+    @Override
+    public void onLongClickBlog(Blog blog) {
+        deleteBlog(blog);
+    }
 
-        public void setData(List<Blog> data) {
-            this.data = data;
+    @Override
+    public void onClickFollowNewBlog() {
+        onClickAddBlog(null);
+    }
+}
+
+class FollowingBlogsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+    private static final int VIEW_TYPE_BLOG = 0;
+    private static final int VIEW_TYPE_NEW_BLOG = 1;
+    private List<Blog> data = new ArrayList<>();
+    private Context context;
+    private CallBacks callBacks;
+
+    interface CallBacks {
+        void onLongClickBlog(Blog blog);
+        void onClickFollowNewBlog();
+    }
+
+    public void setData(Context context, List<Blog> data, CallBacks callBacks) {
+        this.data = data;
+        this.context = context;
+        this.callBacks = callBacks;
+    }
+
+    @Override
+    public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        switch (viewType) {
+            case VIEW_TYPE_BLOG:
+                View view = LayoutInflater.from(context).inflate(R.layout.list_item_following_blog, parent, false);
+                return new ViewHolder(view);
+            case VIEW_TYPE_NEW_BLOG:
+                View newBlogView = LayoutInflater.from(context).inflate(R.layout.list_item_follow_new_blog, parent, false);
+                return new NewBlogViewHolder(newBlogView);
+            default:
+                return null;
         }
+    }
 
-        @Override
-        public FollowingBlogsAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-            View view = LayoutInflater.from(FollowingBlogsActivity.this).inflate(R.layout.list_item_following_blog, parent, false);
-            return new ViewHolder(view);
-        }
-
-        @Override
-        public void onBindViewHolder(FollowingBlogsAdapter.ViewHolder holder, int position) {
-            holder.bind(data.get(position));
-        }
-
-        @Override
-        public int getItemCount() {
-            return data.size();
-        }
-
-        class ViewHolder extends RecyclerView.ViewHolder {
-            private TextView nameTV, urlTV;
-            private Blog blog;
-
-            public ViewHolder(View itemView) {
-                super(itemView);
-                nameTV = (TextView) itemView.findViewById(R.id.blog_name);
-                urlTV = (TextView) itemView.findViewById(R.id.blog_url);
-                itemView.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        BlogActivity.openBlogActivity(FollowingBlogsActivity.this, blog.getName(), blog.getId());
-                    }
-                });
-                itemView.setOnLongClickListener(new View.OnLongClickListener() {
-                    @Override
-                    public boolean onLongClick(View v) {
-                        deleteBlog(blog);
-                        return false;
-                    }
-                });
-            }
-
-            public void bind(Blog data) {
-                this.blog = data;
-
-                if (data.getName() == null) nameTV.setText(R.string.unknown_blog);
-                else nameTV.setText(data.getName());
-                if (data.getUrl() == null) urlTV.setVisibility(View.GONE);
-                else {
-                    urlTV.setVisibility(View.VISIBLE);
-                    urlTV.setText(data.getUrl());
+    @Override
+    public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+        if (holder instanceof ViewHolder) {
+            ((ViewHolder) holder).bind(data.get(position));
+        } else if (holder instanceof NewBlogViewHolder) {
+            ((NewBlogViewHolder) holder).root.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (callBacks != null)
+                        callBacks.onClickFollowNewBlog();
                 }
+            });
+        }
+    }
+
+    @Override
+    public int getItemViewType(int position) {
+        return position == data.size() ? VIEW_TYPE_NEW_BLOG : VIEW_TYPE_BLOG;
+    }
+
+    @Override
+    public int getItemCount() {
+        return data.size() + 1;
+    }
+
+    public List<Blog> getData() {
+        return data;
+    }
+
+    class ViewHolder extends RecyclerView.ViewHolder {
+        private TextView nameTV, urlTV;
+        private Blog blog;
+
+        public ViewHolder(View itemView) {
+            super(itemView);
+            nameTV = (TextView) itemView.findViewById(R.id.blog_name);
+            urlTV = (TextView) itemView.findViewById(R.id.blog_url);
+            itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    BlogActivity.openBlogActivity(context, blog.getName(), blog.getId());
+                }
+            });
+            itemView.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+                    if (callBacks != null)
+                        callBacks.onLongClickBlog(blog);
+                    return false;
+                }
+            });
+        }
+
+        public void bind(Blog data) {
+            this.blog = data;
+
+            if (data.getName() == null) nameTV.setText(R.string.unknown_blog);
+            else nameTV.setText(data.getName());
+            if (data.getUrl() == null) urlTV.setVisibility(View.GONE);
+            else {
+                urlTV.setVisibility(View.VISIBLE);
+                urlTV.setText(data.getUrl());
             }
+        }
+    }
+
+    class NewBlogViewHolder extends RecyclerView.ViewHolder {
+        View root;
+
+        public NewBlogViewHolder(View itemView) {
+            super(itemView);
+            root = itemView.findViewById(R.id.root);
         }
     }
 }

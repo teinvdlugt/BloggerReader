@@ -7,7 +7,7 @@
             android:title="@string/home" />
         <item
             android:id="@+id/follow_blog"
-            android:title="@string/following_blogs" />
+            android:title="@string/blogs" />
         <item
             android:id="@+id/settings"
             android:title="@string/settings" />

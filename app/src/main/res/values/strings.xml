@@ -5,7 +5,7 @@
     <string name="view_in_browser">View in browser</string>
     <string name="copy_url">Copy URL</string>
     <string name="home">Home</string>
-    <string name="following_blogs">Following blogs</string>
+    <string name="blogs">Blogs</string>
     <string name="xs_open_drawer">Open drawer</string>
     <string name="xs_close_drawer">Close drawer</string>
     <string name="following_blogs_activity_title">Following Blogs</string>
@@ -41,4 +41,5 @@
     <string name="blog_not_found_dialog_title">Blog not found</string>
     <string name="already_following_blog_dialog_message">You are already following the blog %1$s.</string>
     <string name="already_following_blog_dialog_title">Already following</string>
+    <string name="follow_a_new_blog">Follow a new blog</string>
 </resources>
